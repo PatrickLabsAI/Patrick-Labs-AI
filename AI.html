@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patrick Labs — 글로벌 기업 뉴스룸 파인더</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#0e0e12;--surface:#16161d;--card:#1c1c26;--border:#2a2a38;--accent:#3b82f6;--accent2:#60a5fa;--text:#f0ede8;--muted:#888899;--radius:14px}
+  body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0 16px;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(59,130,246,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+  body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:700px;height:500px;background:radial-gradient(ellipse,rgba(59,130,246,.08) 0%,transparent 70%);pointer-events:none;z-index:0}
+
+  nav{width:100%;max-width:720px;display:flex;align-items:center;padding:24px 0 0;position:relative;z-index:10}
+  .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
+  .logo-mark{width:34px;height:34px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;font-family:'Inter',sans-serif;letter-spacing:-1px;flex-shrink:0;box-shadow:0 0 16px rgba(59,130,246,.4)}
+  .logo-text-wrap{display:flex;flex-direction:column;line-height:1}
+  .logo-name{font-family:'Inter',sans-serif;font-size:17px;font-weight:800;letter-spacing:-.5px;color:var(--text)}
+  .logo-name span{color:var(--accent)}
+  .logo-sub{font-family:'Inter',sans-serif;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
+
+  main{width:100%;max-width:720px;flex:1;display:flex;flex-direction:column;align-items:center;padding:36px 0 80px;position:relative;z-index:10}
+
+  h1{font-family:'Inter',sans-serif;font-size:clamp(24px,5vw,40px);font-weight:800;text-align:center;line-height:1.2;margin-bottom:16px;letter-spacing:-1.5px}
+  h1 .highlight{color:var(--accent)}
+
+  /* 배지 — h1 바로 아래 */
+  .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.22);border-radius:100px;padding:7px 18px;font-size:12px;color:var(--accent2);font-family:'Inter',sans-serif;font-weight:600;letter-spacing:.3px;margin-bottom:28px}
+  .hero-badge span{font-size:15px}
+
+  .search-wrap{width:100%;position:relative;margin-bottom:32px}
+  .search-icon{position:absolute;left:20px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:17px;pointer-events:none}
+  #searchInput{width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 56px 16px 50px;font-size:15px;color:var(--text);font-family:'Noto Sans KR',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s}
+  #searchInput::placeholder{color:var(--muted)}
+  #searchInput:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+  .search-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--accent);border:none;border-radius:10px;width:38px;height:38px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;transition:background .2s}
+  .search-btn:hover{background:var(--accent2)}
+
+  #results{width:100%}
+  .result-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;animation:slideIn .2s ease;transition:border-color .2s,transform .15s;text-decoration:none;color:var(--text)}
+  .result-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .result-icon{font-size:24px;flex-shrink:0;width:42px;height:42px;background:var(--surface);border-radius:10px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border)}
+  .result-info{flex:1;min-width:0}
+  .result-name{font-weight:700;font-size:14px;margin-bottom:2px}
+  .result-url{font-size:10px;color:var(--muted);margin-bottom:2px;word-break:break-all}
+  .result-desc{font-size:11px;color:#aaa}
+  .result-badge{flex-shrink:0;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);color:var(--accent2);font-size:11px;padding:3px 9px;border-radius:100px;font-weight:600;white-space:nowrap}
+  .no-result{text-align:center;padding:48px 20px;color:var(--muted)}
+  .no-result .ico{font-size:44px;margin-bottom:12px}
+
+  .cat-section{width:100%}
+  .cat-title{font-family:'Inter',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+  .service-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:6px}
+  .service-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 11px;display:flex;align-items:center;gap:9px;text-decoration:none;color:var(--text);transition:border-color .2s,transform .15s,background .15s}
+  .service-card:hover{border-color:var(--accent);transform:translateY(-2px);background:#22222e}
+  .service-card:active{transform:scale(.97)}
+  .sc-icon{font-size:19px;flex-shrink:0}
+  .sc-name{font-size:12px;font-weight:700;line-height:1.3}
+  .sc-hint{font-size:10px;color:var(--muted);margin-top:1px;line-height:1.3}
+  .divider-line{width:100%;height:1px;background:var(--border);margin:22px 0}
+
+  footer{position:relative;z-index:10;width:100%;max-width:720px;padding:24px 0 36px;display:flex;flex-direction:column;align-items:center;gap:12px;border-top:1px solid var(--border)}
+  .footer-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+  .footer-mark{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;font-family:'Inter',sans-serif}
+  .footer-name{font-family:'Inter',sans-serif;font-size:14px;font-weight:800;color:var(--text);letter-spacing:-.5px}
+  .footer-name span{color:var(--accent)}
+  .footer-links{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+  .footer-links a{color:var(--muted);text-decoration:none;font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);transition:color .2s,border-color .2s}
+  .footer-links a:hover{color:var(--text);border-color:var(--accent)}
+  .footer-copy{font-size:11px;color:#3a3a52}
+</style>
+</head>
+<body>
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-mark">PL</div>
+    <div class="logo-text-wrap">
+      <span class="logo-name">Patrick <span>Labs</span></span>
+      <span class="logo-sub">Newsroom Finder</span>
+    </div>
+  </a>
+</nav>
+<main>
+  <h1>글로벌 기업 <span class="highlight">뉴스룸</span> 파인더</h1>
+  <div class="hero-badge"><span>🌍</span> 세계 최대 규모 · 1,000+ 기업 공식 뉴스룸 보유</div>
+
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input id="searchInput" type="text" placeholder="예: 삼성, Apple, Boeing, LVMH..." autocomplete="off">
+    <button class="search-btn" onclick="doSearch()">→</button>
+  </div>
+  <div id="results"></div>
+
+  <div class="cat-section" id="allServices">
+    <div class="cat-title">💻 빅테크 / AI</div><div class="service-grid" id="grid-bigtech"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">📱 전자 / 반도체</div><div class="service-grid" id="grid-semi"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🚗 완성차</div><div class="service-grid" id="grid-auto"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">⚙️ 자동차 부품</div><div class="service-grid" id="grid-autoparts"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🏭 중공업 / 조선</div><div class="service-grid" id="grid-heavy"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🤖 산업 자동화 / 로봇</div><div class="service-grid" id="grid-robot"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">⚡ 에너지 / 석유</div><div class="service-grid" id="grid-oil"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🔋 배터리 / 신재생에너지</div><div class="service-grid" id="grid-battery"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🛡️ 방산 / 항공우주</div><div class="service-grid" id="grid-defense"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🏦 투자 / 자산운용</div><div class="service-grid" id="grid-invest"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🏧 은행 / 보험</div><div class="service-grid" id="grid-bank"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">💳 결제 / 핀테크</div><div class="service-grid" id="grid-fintech"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">💊 제약 / 바이오</div><div class="service-grid" id="grid-pharma"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🏥 의료기기 / 헬스케어</div><div class="service-grid" id="grid-medical"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🛒 유통 / 이커머스</div><div class="service-grid" id="grid-retail"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">👗 패션 / 명품</div><div class="service-grid" id="grid-fashion"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🍔 식품 / 음료</div><div class="service-grid" id="grid-food"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🍺 주류 / 담배</div><div class="service-grid" id="grid-beverage"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🧴 생활용품 / 뷰티</div><div class="service-grid" id="grid-beauty"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🏗️ 건설 / 부동산</div><div class="service-grid" id="grid-construction"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">✈️ 항공 / 크루즈</div><div class="service-grid" id="grid-airline"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🏨 호텔 / 여행</div><div class="service-grid" id="grid-hotel"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">📡 통신 / 네트워크</div><div class="service-grid" id="grid-telecom"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🚚 물류 / 해운</div><div class="service-grid" id="grid-logistics"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">📋 컨설팅 / 회계</div><div class="service-grid" id="grid-consulting"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🎬 미디어 / OTT</div><div class="service-grid" id="grid-media"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🎮 게임 / 엔터</div><div class="service-grid" id="grid-game"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🎵 음악 / 공연</div><div class="service-grid" id="grid-music"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🌿 화학 / 소재</div><div class="service-grid" id="grid-chem"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🧵 섬유 / 포장재</div><div class="service-grid" id="grid-material"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🌾 농업 / 바이오소재</div><div class="service-grid" id="grid-agri"></div>
+    <div class="divider-line"></div>
+    <div class="cat-title">🏥 병원 / 의료서비스</div><div class="service-grid" id="grid-hospital"></div>
+  </div>
+</main>
+<footer>
+  <a href="#" class="footer-logo">
+    <div class="footer-mark">PL</div>
+    <span class="footer-name">Patrick <span>Labs</span></span>
+  </a>
+  <div class="footer-links">
+    <a href="#">개인정보처리방침</a><a href="#">이용약관</a><a href="#">고객지원</a>
+  </div>
+  <div class="footer-copy">© 2026 Patrick Labs. All rights reserved.</div>
+</footer>
+
+<script>
+const DB = [
+// 💻 빅테크 / AI
+{name:"Apple",icon:"🍎",url:"https://www.apple.com/newsroom/",desc:"Apple Newsroom",cat:"bigtech",tags:["apple","애플","아이폰"]},
+{name:"Google",icon:"🔍",url:"https://blog.google/",desc:"Google 블로그",cat:"bigtech",tags:["google","구글","알파벳"]},
+{name:"Meta",icon:"🌐",url:"https://about.fb.com/news/",desc:"Meta Newsroom",cat:"bigtech",tags:["meta","메타","facebook","페이스북"]},
+{name:"Microsoft",icon:"🪟",url:"https://news.microsoft.com/",desc:"Microsoft News",cat:"bigtech",tags:["microsoft","마이크로소프트"]},
+{name:"Amazon",icon:"📦",url:"https://www.aboutamazon.com/news",desc:"Amazon News",cat:"bigtech",tags:["amazon","아마존","aws"]},
+{name:"OpenAI",icon:"🤖",url:"https://openai.com/news/",desc:"OpenAI 뉴스",cat:"bigtech",tags:["openai","chatgpt","gpt"]},
+{name:"Anthropic",icon:"🔮",url:"https://www.anthropic.com/news",desc:"Anthropic 뉴스",cat:"bigtech",tags:["anthropic","claude","클로드"]},
+{name:"NVIDIA",icon:"🎮",url:"https://nvidianews.nvidia.com/",desc:"NVIDIA Newsroom",cat:"bigtech",tags:["nvidia","엔비디아","gpu"]},
+{name:"IBM",icon:"💼",url:"https://newsroom.ibm.com/",desc:"IBM Newsroom",cat:"bigtech",tags:["ibm","클라우드"]},
+{name:"Oracle",icon:"🗄️",url:"https://www.oracle.com/news/",desc:"Oracle News",cat:"bigtech",tags:["oracle","오라클"]},
+{name:"SAP",icon:"🔷",url:"https://news.sap.com/",desc:"SAP Newsroom",cat:"bigtech",tags:["sap","erp"]},
+{name:"Salesforce",icon:"☁️",url:"https://www.salesforce.com/news/",desc:"Salesforce News",cat:"bigtech",tags:["salesforce","crm"]},
+{name:"Adobe",icon:"🎨",url:"https://news.adobe.com/",desc:"Adobe 뉴스룸",cat:"bigtech",tags:["adobe","어도비","photoshop"]},
+{name:"네이버",icon:"🟢",url:"https://www.navercorp.com/navercorp_/company/news/news/list.nhn",desc:"네이버 보도자료",cat:"bigtech",tags:["네이버","naver"]},
+{name:"카카오",icon:"💛",url:"https://kakao.com/story",desc:"카카오 스토리",cat:"bigtech",tags:["카카오","kakao"]},
+{name:"Uber",icon:"🚕",url:"https://www.uber.com/newsroom/",desc:"Uber Newsroom",cat:"bigtech",tags:["uber","우버"]},
+{name:"Airbnb",icon:"🏠",url:"https://news.airbnb.com/",desc:"Airbnb Newsroom",cat:"bigtech",tags:["airbnb","에어비앤비"]},
+{name:"Palantir",icon:"🔭",url:"https://www.palantir.com/newsroom/",desc:"Palantir 뉴스룸",cat:"bigtech",tags:["palantir","팔란티어","ai"]},
+{name:"Shopify",icon:"🛒",url:"https://news.shopify.com/",desc:"Shopify 뉴스",cat:"bigtech",tags:["shopify","이커머스"]},
+{name:"Baidu",icon:"🔴",url:"https://ir.baidu.com/news-releases/news-release-details/",desc:"Baidu IR",cat:"bigtech",tags:["baidu","바이두","중국"]},
+{name:"Alibaba",icon:"🛍️",url:"https://www.alibabagroup.com/en-US/news",desc:"Alibaba 뉴스",cat:"bigtech",tags:["alibaba","알리바바","중국"]},
+{name:"Tencent",icon:"🎮",url:"https://www.tencent.com/en-us/articles/",desc:"Tencent 뉴스",cat:"bigtech",tags:["tencent","텐센트","위챗"]},
+{name:"ByteDance",icon:"🎵",url:"https://newsroom.tiktok.com/en-us/",desc:"TikTok/ByteDance",cat:"bigtech",tags:["bytedance","tiktok","틱톡"]},
+{name:"Xiaomi",icon:"📱",url:"https://www.mi.com/global/newsroom/",desc:"Xiaomi Newsroom",cat:"bigtech",tags:["xiaomi","샤오미"]},
+{name:"LINE",icon:"💚",url:"https://linecorp.com/ja/pr/news/",desc:"LINE 보도자료",cat:"bigtech",tags:["line","라인","일본"]},
+{name:"DeepMind",icon:"🧠",url:"https://deepmind.google/discover/blog/",desc:"DeepMind 블로그",cat:"bigtech",tags:["deepmind","딥마인드","ai"]},
+{name:"xAI",icon:"✖️",url:"https://x.ai/news",desc:"xAI 뉴스",cat:"bigtech",tags:["xai","grok","일론머스크"]},
+{name:"Snowflake",icon:"❄️",url:"https://www.snowflake.com/en/news/",desc:"Snowflake Newsroom",cat:"bigtech",tags:["snowflake","데이터"]},
+{name:"ServiceNow",icon:"⚙️",url:"https://www.servicenow.com/company/media/press-room.html",desc:"ServiceNow 뉴스",cat:"bigtech",tags:["servicenow","it관리"]},
+{name:"Workday",icon:"📊",url:"https://newsroom.workday.com/",desc:"Workday Newsroom",cat:"bigtech",tags:["workday","hr"]},
+{name:"Palo Alto Networks",icon:"🛡️",url:"https://www.paloaltonetworks.com/company/press-room",desc:"Palo Alto 보도자료",cat:"bigtech",tags:["paloalto","보안","사이버"]},
+{name:"CrowdStrike",icon:"🦅",url:"https://www.crowdstrike.com/en-us/press-releases/",desc:"CrowdStrike 뉴스룸",cat:"bigtech",tags:["crowdstrike","사이버보안"]},
+{name:"Datadog",icon:"🐶",url:"https://investors.datadoghq.com/news-releases",desc:"Datadog 보도자료",cat:"bigtech",tags:["datadog","모니터링","클라우드"]},
+{name:"Twilio",icon:"📲",url:"https://www.twilio.com/en-us/blog",desc:"Twilio 블로그",cat:"bigtech",tags:["twilio","api","통신"]},
+{name:"HashiCorp",icon:"💎",url:"https://www.hashicorp.com/blog",desc:"HashiCorp 블로그",cat:"bigtech",tags:["hashicorp","devops","클라우드"]},
+{name:"Intuit",icon:"💰",url:"https://www.intuit.com/company/press-room/press-releases/",desc:"Intuit 보도자료",cat:"bigtech",tags:["intuit","회계","세금"]},
+{name:"HubSpot",icon:"🧲",url:"https://www.hubspot.com/company-news",desc:"HubSpot 뉴스룸",cat:"bigtech",tags:["hubspot","마케팅","crm"]},
+{name:"Zendesk",icon:"🎧",url:"https://www.zendesk.com/newsroom/",desc:"Zendesk 뉴스룸",cat:"bigtech",tags:["zendesk","고객서비스","crm"]},
+{name:"Atlassian",icon:"🔵",url:"https://www.atlassian.com/company/news",desc:"Atlassian 뉴스",cat:"bigtech",tags:["atlassian","jira","협업"]},
+{name:"GitHub",icon:"🐙",url:"https://github.blog/",desc:"GitHub 블로그",cat:"bigtech",tags:["github","깃허브","개발"]},
+
+// 📱 전자 / 반도체
+{name:"삼성전자",icon:"📱",url:"https://news.samsung.com/kr/",desc:"Samsung 뉴스룸",cat:"semi",tags:["삼성","samsung","반도체"]},
+{name:"LG전자",icon:"🖥️",url:"https://www.lgnewsroom.com/",desc:"LG 뉴스룸",cat:"semi",tags:["lg","전자","가전"]},
+{name:"SK하이닉스",icon:"🔬",url:"https://news.skhynix.co.kr/",desc:"SK하이닉스 뉴스룸",cat:"semi",tags:["sk","하이닉스","반도체"]},
+{name:"Intel",icon:"🔧",url:"https://www.intel.com/content/www/us/en/newsroom/home.html",desc:"Intel Newsroom",cat:"semi",tags:["intel","인텔","cpu"]},
+{name:"TSMC",icon:"🏗️",url:"https://pr.tsmc.com/english/news",desc:"TSMC 보도자료",cat:"semi",tags:["tsmc","파운드리","대만"]},
+{name:"Sony",icon:"🎵",url:"https://www.sony.com/en/SonyInfo/News/Press/",desc:"Sony 보도자료",cat:"semi",tags:["sony","소니"]},
+{name:"Qualcomm",icon:"📡",url:"https://www.qualcomm.com/news/releases",desc:"Qualcomm 보도자료",cat:"semi",tags:["qualcomm","퀄컴","칩셋"]},
+{name:"ASML",icon:"🔭",url:"https://www.asml.com/en/news/press-releases",desc:"ASML 보도자료",cat:"semi",tags:["asml","반도체장비","노광"]},
+{name:"Micron",icon:"💾",url:"https://investors.micron.com/news-releases/news-release-details/",desc:"Micron 보도자료",cat:"semi",tags:["micron","마이크론","메모리"]},
+{name:"AMD",icon:"🔴",url:"https://ir.amd.com/news-events/press-releases",desc:"AMD 보도자료",cat:"semi",tags:["amd","반도체","gpu"]},
+{name:"Broadcom",icon:"📶",url:"https://investors.broadcom.com/news-releases",desc:"Broadcom 보도자료",cat:"semi",tags:["broadcom","브로드컴","반도체"]},
+{name:"Panasonic",icon:"🔋",url:"https://news.panasonic.com/global/",desc:"Panasonic 뉴스",cat:"semi",tags:["panasonic","파나소닉","전자"]},
+{name:"Arm Holdings",icon:"💪",url:"https://newsroom.arm.com/",desc:"Arm Newsroom",cat:"semi",tags:["arm","칩","반도체"]},
+{name:"Texas Instruments",icon:"🔢",url:"https://news.ti.com/",desc:"TI 뉴스룸",cat:"semi",tags:["ti","텍사스인스트루먼트","반도체"]},
+{name:"Applied Materials",icon:"⚗️",url:"https://www.appliedmaterials.com/us/en/company/newsroom.html",desc:"Applied Materials 뉴스",cat:"semi",tags:["applied materials","반도체장비"]},
+{name:"Lam Research",icon:"🔩",url:"https://investor.lamresearch.com/news-releases/",desc:"Lam Research 뉴스",cat:"semi",tags:["lam research","반도체장비"]},
+{name:"Canon",icon:"📷",url:"https://global.canon/en/news/index.html",desc:"Canon 뉴스",cat:"semi",tags:["canon","캐논","카메라"]},
+{name:"Nikon",icon:"📸",url:"https://www.nikon.com/news/",desc:"Nikon 뉴스",cat:"semi",tags:["nikon","니콘","카메라"]},
+{name:"Toshiba",icon:"💿",url:"https://www.global.toshiba/ww/news.html",desc:"Toshiba 뉴스",cat:"semi",tags:["toshiba","도시바"]},
+{name:"Hitachi",icon:"⚙️",url:"https://www.hitachi.com/New/cnews/",desc:"Hitachi 뉴스",cat:"semi",tags:["hitachi","히타치"]},
+{name:"Fujitsu",icon:"💻",url:"https://www.fujitsu.com/global/about/resources/news/press-releases/",desc:"Fujitsu 보도자료",cat:"semi",tags:["fujitsu","후지쯔"]},
+{name:"MediaTek",icon:"📱",url:"https://www.mediatek.com/news-events/press-releases",desc:"MediaTek 보도자료",cat:"semi",tags:["mediatek","미디어텍","칩셋"]},
+{name:"삼성전기",icon:"🔌",url:"https://news.samsungsem.com/kr/",desc:"삼성전기 뉴스룸",cat:"semi",tags:["삼성전기","부품"]},
+{name:"LG이노텍",icon:"🔦",url:"https://www.lginnotek.com/ko/media/news.do",desc:"LG이노텍 뉴스",cat:"semi",tags:["lg이노텍","카메라모듈"]},
+{name:"Renesas",icon:"🚗",url:"https://www.renesas.com/en/about/newsroom",desc:"Renesas 뉴스룸",cat:"semi",tags:["renesas","르네사스","반도체"]},
+{name:"Infineon",icon:"♾️",url:"https://www.infineon.com/cms/en/about-infineon/press/press-releases/",desc:"Infineon 보도자료",cat:"semi",tags:["infineon","인피니언","반도체"]},
+{name:"STMicroelectronics",icon:"🔋",url:"https://www.st.com/content/st_com/en/about/st_company_information/press_release.html",desc:"ST마이크로 뉴스",cat:"semi",tags:["st","stmicro","반도체"]},
+{name:"Western Digital",icon:"💽",url:"https://www.westerndigital.com/company/newsroom",desc:"WD Newsroom",cat:"semi",tags:["western digital","wd","저장장치"]},
+{name:"Seagate",icon:"💾",url:"https://www.seagate.com/news/news-archive/",desc:"Seagate 뉴스룸",cat:"semi",tags:["seagate","시게이트","hdd","저장장치"]},
+{name:"Marvell Technology",icon:"⚡",url:"https://investors.marvell.com/news-releases",desc:"Marvell 보도자료",cat:"semi",tags:["marvell","마벨","반도체","5g"]},
+
+// 🚗 완성차
+{name:"현대자동차",icon:"🚗",url:"https://www.hyundai.com/worldwide/ko/newsroom",desc:"현대 뉴스룸",cat:"auto",tags:["현대","hyundai","자동차"]},
+{name:"기아",icon:"🏎️",url:"https://www.kia.com/worldwide/press/pressreleaselist.do",desc:"기아 보도자료",cat:"auto",tags:["기아","kia","자동차"]},
+{name:"Tesla",icon:"⚡",url:"https://www.tesla.com/ko_KR/blog",desc:"Tesla Blog",cat:"auto",tags:["tesla","테슬라","전기차"]},
+{name:"Toyota",icon:"🚙",url:"https://global.toyota/en/newsroom/",desc:"Toyota Newsroom",cat:"auto",tags:["toyota","도요타","자동차"]},
+{name:"BMW",icon:"🏎️",url:"https://www.press.bmwgroup.com/global/article/list",desc:"BMW PressClub",cat:"auto",tags:["bmw","자동차","독일"]},
+{name:"Volkswagen",icon:"🚗",url:"https://www.volkswagen-newsroom.com/en",desc:"VW Newsroom",cat:"auto",tags:["volkswagen","폭스바겐"]},
+{name:"Mercedes-Benz",icon:"⭐",url:"https://group.mercedes-benz.com/company/news/",desc:"Mercedes 뉴스",cat:"auto",tags:["mercedes","벤츠"]},
+{name:"Ford",icon:"🛻",url:"https://media.ford.com/content/fordmedia/fna/us/en/news.html",desc:"Ford Media Center",cat:"auto",tags:["ford","포드"]},
+{name:"GM",icon:"🚐",url:"https://media.gm.com/media/us/en/gm/news.html",desc:"GM Newsroom",cat:"auto",tags:["gm","제너럴모터스"]},
+{name:"Honda",icon:"🏍️",url:"https://global.honda/en/newsroom/",desc:"Honda Newsroom",cat:"auto",tags:["honda","혼다"]},
+{name:"Stellantis",icon:"🚙",url:"https://www.stellantis.com/en/news",desc:"Stellantis Newsroom",cat:"auto",tags:["stellantis","지프","크라이슬러"]},
+{name:"Nissan",icon:"🚘",url:"https://global.nissannews.com/en",desc:"Nissan 뉴스",cat:"auto",tags:["nissan","닛산"]},
+{name:"Porsche",icon:"🏁",url:"https://newsroom.porsche.com/en.html",desc:"Porsche Newsroom",cat:"auto",tags:["porsche","포르쉐"]},
+{name:"Audi",icon:"⭕",url:"https://www.audi-mediacenter.com/en/press-releases",desc:"Audi 보도자료",cat:"auto",tags:["audi","아우디"]},
+{name:"Volvo Cars",icon:"🛡️",url:"https://www.media.volvocars.com/global/en-gb/media/pressreleases",desc:"Volvo Cars 뉴스",cat:"auto",tags:["volvo","볼보"]},
+{name:"Renault",icon:"🔶",url:"https://media.renaultgroup.com/en/",desc:"Renault Group 뉴스",cat:"auto",tags:["renault","르노"]},
+{name:"BYD",icon:"🔋",url:"https://www.byd.com/en/news.html",desc:"BYD 뉴스",cat:"auto",tags:["byd","비야디","전기차","중국"]},
+{name:"Rivian",icon:"🚙",url:"https://rivian.com/newsroom",desc:"Rivian Newsroom",cat:"auto",tags:["rivian","리비안","전기차"]},
+{name:"Lucid Motors",icon:"💡",url:"https://lucidmotors.com/media-room/",desc:"Lucid 뉴스룸",cat:"auto",tags:["lucid","루시드","전기차"]},
+{name:"Subaru",icon:"⭐",url:"https://www.subaru.com/about/newsroom/index.html",desc:"Subaru 뉴스룸",cat:"auto",tags:["subaru","스바루","자동차"]},
+{name:"Mazda",icon:"🚘",url:"https://newsroom.mazda.com/en/",desc:"Mazda 뉴스룸",cat:"auto",tags:["mazda","마즈다","자동차"]},
+{name:"Mitsubishi Motors",icon:"💠",url:"https://www.mitsubishi-motors.com/en/newsrelease/",desc:"Mitsubishi Motors 뉴스",cat:"auto",tags:["mitsubishi","미쓰비시","자동차"]},
+{name:"Hyundai Rotem",icon:"🚂",url:"https://www.hyundai-rotem.co.kr/KOR/media/press.asp",desc:"현대로템 보도자료",cat:"auto",tags:["현대로템","방산","철도"]},
+{name:"Peugeot",icon:"🦁",url:"https://media.peugeot.com/en",desc:"Peugeot 미디어",cat:"auto",tags:["peugeot","푸조"]},
+{name:"Kia EV",icon:"⚡",url:"https://www.kia.com/worldwide/press/pressreleaselist.do",desc:"기아 EV 보도자료",cat:"auto",tags:["기아ev","전기차","EV6"]},
+
+// ⚙️ 자동차 부품
+{name:"Bosch",icon:"🔧",url:"https://www.bosch-presse.de/pressportal/de/en/home-page-11702.html",desc:"Bosch 보도자료",cat:"autoparts",tags:["bosch","보쉬","자동차부품"]},
+{name:"Continental",icon:"🔄",url:"https://www.continental.com/en/press/press-releases/",desc:"Continental 보도자료",cat:"autoparts",tags:["continental","콘티넨탈","타이어"]},
+{name:"Denso",icon:"🔩",url:"https://www.denso.com/global/en/news/",desc:"Denso 뉴스",cat:"autoparts",tags:["denso","덴소","자동차부품","일본"]},
+{name:"Aptiv",icon:"🔌",url:"https://www.aptiv.com/en/news",desc:"Aptiv 뉴스",cat:"autoparts",tags:["aptiv","자동차부품","전장"]},
+{name:"Magna International",icon:"🏭",url:"https://www.magna.com/company/newsroom",desc:"Magna 뉴스룸",cat:"autoparts",tags:["magna","마그나","자동차부품"]},
+{name:"BorgWarner",icon:"⚙️",url:"https://www.borgwarner.com/newsroom/press-releases",desc:"BorgWarner 보도자료",cat:"autoparts",tags:["borgwarner","자동차부품"]},
+{name:"Hyundai Mobis",icon:"⚙️",url:"https://www.mobis.co.kr/kor/media/press/list.do",desc:"현대모비스 보도자료",cat:"autoparts",tags:["현대모비스","자동차부품"]},
+{name:"Valeo",icon:"💡",url:"https://www.valeo.com/en/press-releases/",desc:"Valeo 보도자료",cat:"autoparts",tags:["valeo","발레오","자동차부품","프랑스"]},
+{name:"ZF Friedrichshafen",icon:"⚙️",url:"https://www.zf.com/company/en/press/news/news_overview.html",desc:"ZF 뉴스룸",cat:"autoparts",tags:["zf","자동차부품","독일"]},
+{name:"Mobileye",icon:"👁️",url:"https://www.mobileye.com/news/",desc:"Mobileye 뉴스",cat:"autoparts",tags:["mobileye","모빌아이","자율주행"]},
+{name:"Waymo",icon:"🚦",url:"https://waymo.com/blog/",desc:"Waymo 블로그",cat:"autoparts",tags:["waymo","웨이모","자율주행"]},
+{name:"Lear Corporation",icon:"🪑",url:"https://ir.lear.com/news-releases",desc:"Lear 보도자료",cat:"autoparts",tags:["lear","자동차시트","자동차부품"]},
+{name:"Autoliv",icon:"🛞",url:"https://www.autoliv.com/newsroom",desc:"Autoliv 뉴스룸",cat:"autoparts",tags:["autoliv","에어백","안전장치"]},
+{name:"Hankook Tire",icon:"🔵",url:"https://www.hankooktire.com/kr/ko/content/news/press.html",desc:"한국타이어 뉴스",cat:"autoparts",tags:["한국타이어","타이어"]},
+{name:"금호타이어",icon:"🟡",url:"https://www.kumhotire.co.kr/ko/news/press.do",desc:"금호타이어 보도자료",cat:"autoparts",tags:["금호타이어","타이어"]},
+
+// 🏭 중공업 / 조선
+{name:"포스코",icon:"🔩",url:"https://www.posco.co.kr/homepage/docs/kor6/jsp/pr/s91e1010v.jsp",desc:"POSCO 보도자료",cat:"heavy",tags:["포스코","posco","철강"]},
+{name:"현대중공업",icon:"🚢",url:"https://www.hhi.co.kr/kor/pr/news/list.do",desc:"현대중공업 보도자료",cat:"heavy",tags:["현대중공업","조선"]},
+{name:"삼성중공업",icon:"⚓",url:"https://www.shi.samsung.co.kr/kor/media/news.aspx",desc:"삼성중공업 보도자료",cat:"heavy",tags:["삼성중공업","조선"]},
+{name:"HD현대",icon:"🛳️",url:"https://www.hd.com/ko/pr/press-release-list.do",desc:"HD현대 보도자료",cat:"heavy",tags:["hd현대","조선","중공업"]},
+{name:"두산에너빌리티",icon:"🏭",url:"https://www.doosan.com/ko/press-center/",desc:"두산 보도자료",cat:"heavy",tags:["두산","에너지","발전"]},
+{name:"Thyssenkrupp",icon:"⚙️",url:"https://www.thyssenkrupp.com/en/newsroom/",desc:"Thyssenkrupp 뉴스룸",cat:"heavy",tags:["thyssenkrupp","티센크루프","철강","독일"]},
+{name:"ArcelorMittal",icon:"🔩",url:"https://corporate.arcelormittal.com/media/press-releases",desc:"ArcelorMittal 뉴스",cat:"heavy",tags:["arcelormittal","철강","글로벌"]},
+{name:"Nippon Steel",icon:"⚙️",url:"https://www.nipponsteel.com/en/news/",desc:"Nippon Steel 뉴스",cat:"heavy",tags:["nippon steel","일본제철","철강","일본"]},
+{name:"POSCO Holdings",icon:"🏗️",url:"https://www.posco.co.kr/homepage/docs/kor6/jsp/pr/s91e1010v.jsp",desc:"POSCO홀딩스 뉴스",cat:"heavy",tags:["포스코홀딩스","철강"]},
+{name:"Mitsubishi Heavy",icon:"🏭",url:"https://www.mhi.com/news",desc:"MHI 뉴스룸",cat:"heavy",tags:["mitsubishi","미쓰비시","중공업","일본"]},
+{name:"Kawasaki Heavy",icon:"🏍️",url:"https://global.kawasaki.com/en/corp/newsroom/",desc:"Kawasaki 뉴스룸",cat:"heavy",tags:["kawasaki","카와사키","중공업"]},
+{name:"IHI Corporation",icon:"✈️",url:"https://www.ihi.co.jp/en/news/",desc:"IHI 뉴스룸",cat:"heavy",tags:["ihi","중공업","항공","일본"]},
+{name:"Voestalpine",icon:"⚙️",url:"https://www.voestalpine.com/group/en/press/",desc:"Voestalpine 보도자료",cat:"heavy",tags:["voestalpine","철강","오스트리아"]},
+{name:"한화",icon:"💥",url:"https://www.hanwha.com/ko/news_and_media/news/",desc:"한화 뉴스룸",cat:"heavy",tags:["한화","hanwha","화학","방산"]},
+{name:"효성",icon:"🧵",url:"https://www.hyosung.com/ko/news/",desc:"효성 뉴스룸",cat:"heavy",tags:["효성","소재","화학"]},
+
+// 🤖 산업 자동화 / 로봇
+{name:"Siemens",icon:"⚙️",url:"https://press.siemens.com/global/en/news/press-releases",desc:"Siemens 보도자료",cat:"robot",tags:["siemens","지멘스","독일"]},
+{name:"ABB",icon:"🤖",url:"https://new.abb.com/news/press-releases",desc:"ABB 보도자료",cat:"robot",tags:["abb","로봇","자동화"]},
+{name:"Fanuc",icon:"🦾",url:"https://www.fanuc.co.jp/en/news/index.html",desc:"Fanuc 뉴스",cat:"robot",tags:["fanuc","파낙","로봇","일본"]},
+{name:"Yaskawa",icon:"🤖",url:"https://www.yaskawa.co.jp/en/news/index.html",desc:"Yaskawa 뉴스",cat:"robot",tags:["yaskawa","야스카와","로봇"]},
+{name:"KUKA",icon:"🦿",url:"https://www.kuka.com/en-us/press/press-releases",desc:"KUKA 보도자료",cat:"robot",tags:["kuka","쿠카","로봇","독일"]},
+{name:"Rockwell Automation",icon:"🔄",url:"https://www.rockwellautomation.com/en-us/company/news/press-releases.html",desc:"Rockwell 보도자료",cat:"robot",tags:["rockwell","로크웰","자동화"]},
+{name:"Honeywell",icon:"🌡️",url:"https://www.honeywell.com/us/en/press/2024",desc:"Honeywell 보도자료",cat:"robot",tags:["honeywell","하니웰","산업"]},
+{name:"Emerson Electric",icon:"🔌",url:"https://www.emerson.com/en-us/news",desc:"Emerson 뉴스룸",cat:"robot",tags:["emerson","에머슨","자동화"]},
+{name:"Parker Hannifin",icon:"🔩",url:"https://www.parker.com/us/en/about-parker/newsroom.html",desc:"Parker Hannifin 뉴스",cat:"robot",tags:["parker","파커","산업","유압"]},
+{name:"Caterpillar",icon:"🚜",url:"https://www.caterpillar.com/en/news.html",desc:"Caterpillar 뉴스룸",cat:"robot",tags:["caterpillar","캐터필러","중장비"]},
+{name:"Deere & Co",icon:"🌾",url:"https://www.deere.com/en/news/",desc:"John Deere 뉴스룸",cat:"robot",tags:["deere","존디어","농기계"]},
+{name:"Komatsu",icon:"🚧",url:"https://home.komatsu/en/press/",desc:"Komatsu 보도자료",cat:"robot",tags:["komatsu","코마츠","건설기계"]},
+{name:"Illinois Tool Works",icon:"🔧",url:"https://www.itw.com/media/",desc:"ITW 뉴스룸",cat:"robot",tags:["itw","제조"]},
+{name:"Danaher",icon:"🔬",url:"https://www.danaher.com/news",desc:"Danaher 뉴스",cat:"robot",tags:["danaher","제조","의료"]},
+{name:"Eaton",icon:"⚡",url:"https://www.eaton.com/us/en-us/company/news-insights/newsroom.html",desc:"Eaton 뉴스룸",cat:"robot",tags:["eaton","이튼","전력","산업"]},
+{name:"LS Electric",icon:"🔌",url:"https://www.lselectric.co.kr/kor/news/press.do",desc:"LS일렉트릭 뉴스",cat:"robot",tags:["ls일렉트릭","전력","산업"]},
+
+// ⚡ 에너지 / 석유
+{name:"Saudi Aramco",icon:"🛢️",url:"https://www.aramco.com/en/news-media/news",desc:"Saudi Aramco 뉴스",cat:"oil",tags:["aramco","사우디아람코","석유"]},
+{name:"ExxonMobil",icon:"⛽",url:"https://corporate.exxonmobil.com/news/newsroom",desc:"ExxonMobil Newsroom",cat:"oil",tags:["exxon","엑슨모빌","석유"]},
+{name:"Shell",icon:"🐚",url:"https://www.shell.com/media/news-and-media-releases.html",desc:"Shell 뉴스룸",cat:"oil",tags:["shell","쉘","석유"]},
+{name:"BP",icon:"🌱",url:"https://www.bp.com/en/global/corporate/news-and-insights.html",desc:"BP 뉴스",cat:"oil",tags:["bp","석유","영국"]},
+{name:"TotalEnergies",icon:"🌞",url:"https://totalenergies.com/media/news",desc:"TotalEnergies 뉴스",cat:"oil",tags:["total","토탈에너지","석유"]},
+{name:"Chevron",icon:"⛽",url:"https://www.chevron.com/newsroom",desc:"Chevron Newsroom",cat:"oil",tags:["chevron","쉐브론","석유"]},
+{name:"ConocoPhillips",icon:"🏭",url:"https://www.conocophillips.com/news-media/",desc:"ConocoPhillips 뉴스",cat:"oil",tags:["conocophillips","코노코","석유"]},
+{name:"Eni",icon:"🐾",url:"https://www.eni.com/en-IT/media/press-release.html",desc:"Eni 보도자료",cat:"oil",tags:["eni","에니","석유","이탈리아"]},
+{name:"Equinor",icon:"🌊",url:"https://www.equinor.com/news",desc:"Equinor 뉴스",cat:"oil",tags:["equinor","에퀴노르","석유","노르웨이"]},
+{name:"Petrobras",icon:"🛢️",url:"https://petrobras.com.br/en/news/",desc:"Petrobras 뉴스",cat:"oil",tags:["petrobras","페트로브라스","석유","브라질"]},
+{name:"Schlumberger (SLB)",icon:"🔩",url:"https://www.slb.com/news",desc:"SLB 뉴스룸",cat:"oil",tags:["slb","슐럼버거","유전서비스"]},
+{name:"Halliburton",icon:"⛽",url:"https://www.halliburton.com/en/about-us/news.html",desc:"Halliburton 뉴스",cat:"oil",tags:["halliburton","할리버튼","유전서비스"]},
+{name:"KEPCO",icon:"🔌",url:"https://home.kepco.co.kr/kepco/CO/ntcob/list.do",desc:"한국전력 보도자료",cat:"oil",tags:["kepco","한국전력","전력"]},
+{name:"한국가스공사",icon:"🔥",url:"https://www.kogas.or.kr/portal/contents.do?key=1538",desc:"한국가스공사 뉴스",cat:"oil",tags:["kogas","한국가스공사","lng"]},
+{name:"Duke Energy",icon:"⚡",url:"https://news.duke-energy.com/releases",desc:"Duke Energy 뉴스",cat:"oil",tags:["duke energy","듀크에너지","전력"]},
+{name:"Dominion Energy",icon:"🏭",url:"https://news.dominionenergy.com/",desc:"Dominion Energy 뉴스",cat:"oil",tags:["dominion","도미니언","에너지"]},
+
+// 🔋 배터리 / 신재생에너지
+{name:"SK이노베이션",icon:"🔋",url:"https://skinnovation.com/press/list.do",desc:"SK이노베이션 보도자료",cat:"battery",tags:["sk이노베이션","배터리","에너지"]},
+{name:"LG에너지솔루션",icon:"🔌",url:"https://www.lgenergysolution.com/kr/media/news/list.do",desc:"LGES 뉴스룸",cat:"battery",tags:["lges","lg에너지","배터리"]},
+{name:"삼성SDI",icon:"⚡",url:"https://www.samsungsdi.co.kr/media/view.do?seq=1",desc:"삼성SDI 뉴스룸",cat:"battery",tags:["삼성sdi","배터리","에너지"]},
+{name:"CATL",icon:"🔋",url:"https://www.catl.com/en/news/",desc:"CATL 뉴스룸",cat:"battery",tags:["catl","닝더스다이","배터리","중국"]},
+{name:"Panasonic Energy",icon:"🔋",url:"https://news.panasonic.com/global/",desc:"Panasonic Energy 뉴스",cat:"battery",tags:["파나소닉에너지","배터리","일본"]},
+{name:"NextEra Energy",icon:"🌬️",url:"https://www.nexteraenergy.com/newsroom.html",desc:"NextEra 뉴스룸",cat:"battery",tags:["nextera","재생에너지","태양광"]},
+{name:"Vestas",icon:"💨",url:"https://www.vestas.com/en/media/company-news",desc:"Vestas 뉴스",cat:"battery",tags:["vestas","풍력","덴마크"]},
+{name:"Siemens Energy",icon:"⚡",url:"https://press.siemens-energy.com/global/en",desc:"Siemens Energy 뉴스",cat:"battery",tags:["siemens energy","에너지","독일"]},
+{name:"Enphase Energy",icon:"☀️",url:"https://investor.enphase.com/news-releases/",desc:"Enphase 보도자료",cat:"battery",tags:["enphase","태양광"]},
+{name:"First Solar",icon:"🌞",url:"https://investor.firstsolar.com/news-releases/news-release-details/",desc:"First Solar 뉴스",cat:"battery",tags:["first solar","태양광"]},
+{name:"Orsted",icon:"🌊",url:"https://orsted.com/en/media/newsroom",desc:"Orsted 뉴스룸",cat:"battery",tags:["orsted","오스테드","해상풍력"]},
+{name:"한화솔루션",icon:"☀️",url:"https://www.hanwhasolutions.com/ko/newsroom/newsroom.do",desc:"한화솔루션 뉴스룸",cat:"battery",tags:["한화솔루션","태양광","화학"]},
+{name:"OCI Holdings",icon:"🌞",url:"https://www.oci.co.kr/pr/news.do",desc:"OCI 뉴스룸",cat:"battery",tags:["oci","태양광","폴리실리콘"]},
+
+// 🛡️ 방산 / 항공우주
+{name:"SpaceX",icon:"🚀",url:"https://www.spacex.com/updates/",desc:"SpaceX Updates",cat:"defense",tags:["spacex","스페이스엑스","우주"]},
+{name:"Lockheed Martin",icon:"✈️",url:"https://news.lockheedmartin.com/",desc:"Lockheed Martin 뉴스룸",cat:"defense",tags:["lockheed","록히드마틴","방산","전투기"]},
+{name:"Boeing Defense",icon:"🛩️",url:"https://boeing.mediaroom.com/news-releases-statements",desc:"Boeing 보도자료",cat:"defense",tags:["boeing","보잉","항공","방산"]},
+{name:"Raytheon (RTX)",icon:"🎯",url:"https://www.rtx.com/news/news-center",desc:"RTX 뉴스룸",cat:"defense",tags:["raytheon","레이시온","방산","미사일"]},
+{name:"Northrop Grumman",icon:"🛸",url:"https://news.northropgrumman.com/",desc:"Northrop Grumman 뉴스",cat:"defense",tags:["northrop","노스롭그루먼","방산"]},
+{name:"General Dynamics",icon:"⚔️",url:"https://www.gd.com/news",desc:"General Dynamics 뉴스",cat:"defense",tags:["general dynamics","방산","전차"]},
+{name:"BAE Systems",icon:"🛡️",url:"https://www.baesystems.com/en/our-company/press-releases",desc:"BAE Systems 보도자료",cat:"defense",tags:["bae","방산","영국"]},
+{name:"Airbus",icon:"🛫",url:"https://www.airbus.com/en/newsroom/press-releases",desc:"Airbus 보도자료",cat:"defense",tags:["airbus","에어버스","항공","유럽"]},
+{name:"L3Harris",icon:"📡",url:"https://www.l3harris.com/newsroom",desc:"L3Harris 뉴스룸",cat:"defense",tags:["l3harris","방산","통신"]},
+{name:"한화에어로스페이스",icon:"🪖",url:"https://www.hanwhaaerospace.com/kor/newsroom/press-release.do",desc:"한화에어로 보도자료",cat:"defense",tags:["한화","방산","항공"]},
+{name:"LIG넥스원",icon:"🎖️",url:"https://www.lignex1.com/kr/media/press.asp",desc:"LIG넥스원 보도자료",cat:"defense",tags:["lig","넥스원","방산","미사일"]},
+{name:"KAI",icon:"🛩️",url:"https://www.koreaaero.com/KOR/Media/Press.aspx",desc:"KAI 보도자료",cat:"defense",tags:["kai","한국항공우주","방산"]},
+{name:"Blue Origin",icon:"🚀",url:"https://www.blueorigin.com/news",desc:"Blue Origin 뉴스",cat:"defense",tags:["blue origin","블루오리진","우주"]},
+{name:"Leonardo",icon:"🦅",url:"https://www.leonardocompany.com/en/media/news",desc:"Leonardo 뉴스룸",cat:"defense",tags:["leonardo","레오나르도","방산","이탈리아"]},
+{name:"Thales",icon:"🔭",url:"https://www.thalesgroup.com/en/worldwide/group/press_release",desc:"Thales 보도자료",cat:"defense",tags:["thales","탈레스","방산","프랑스"]},
+{name:"Rheinmetall",icon:"⚙️",url:"https://www.rheinmetall.com/en/media/news_and_stories/press_releases/",desc:"Rheinmetall 보도자료",cat:"defense",tags:["rheinmetall","라인메탈","방산","독일"]},
+{name:"SAAB",icon:"✈️",url:"https://www.saab.com/newsroom/press-releases/",desc:"SAAB 보도자료",cat:"defense",tags:["saab","사브","방산","스웨덴"]},
+{name:"Rolls-Royce",icon:"🏆",url:"https://www.rolls-royce.com/media/press-releases.aspx",desc:"Rolls-Royce 보도자료",cat:"defense",tags:["rolls-royce","롤스로이스","엔진","항공"]},
+{name:"GE Aerospace",icon:"✈️",url:"https://www.geaerospace.com/news/press-releases",desc:"GE Aerospace 뉴스",cat:"defense",tags:["ge aerospace","항공","엔진"]},
+{name:"NASA",icon:"🌌",url:"https://www.nasa.gov/news/releases/",desc:"NASA 보도자료",cat:"defense",tags:["nasa","나사","우주"]},
+{name:"Textron",icon:"🚁",url:"https://www.textron.com/news/press-releases",desc:"Textron 보도자료",cat:"defense",tags:["textron","텍스트론","항공","방산"]},
+{name:"Leidos",icon:"🔐",url:"https://www.leidos.com/newsroom",desc:"Leidos 뉴스룸",cat:"defense",tags:["leidos","레이도스","방산"]},
+{name:"Elbit Systems",icon:"🎯",url:"https://elbitsystems.com/news/",desc:"Elbit 뉴스룸",cat:"defense",tags:["elbit","엘빗","방산","이스라엘"]},
+{name:"MBDA",icon:"💥",url:"https://www.mbda-systems.com/press-releases/",desc:"MBDA 보도자료",cat:"defense",tags:["mbda","미사일","방산","유럽"]},
+
+// 🏦 투자 / 자산운용
+{name:"BlackRock",icon:"📈",url:"https://www.blackrock.com/corporate/newsroom",desc:"BlackRock 뉴스룸",cat:"invest",tags:["blackrock","블랙록","자산운용"]},
+{name:"Vanguard",icon:"⛵",url:"https://corporate.vanguard.com/content/corporatesite/us/en/corp/articles-and-reports.html",desc:"Vanguard 뉴스룸",cat:"invest",tags:["vanguard","뱅가드","자산운용","etf"]},
+{name:"Fidelity",icon:"📈",url:"https://www.fidelity.com/about-fidelity/our-company/news",desc:"Fidelity 뉴스",cat:"invest",tags:["fidelity","피델리티","자산운용"]},
+{name:"Goldman Sachs",icon:"💰",url:"https://www.goldmansachs.com/media-relations/press-releases-and-comments/",desc:"Goldman Sachs 보도자료",cat:"invest",tags:["goldman","골드만삭스","투자","금융"]},
+{name:"Morgan Stanley",icon:"📊",url:"https://www.morganstanley.com/press-releases",desc:"Morgan Stanley 보도자료",cat:"invest",tags:["morgan stanley","모건스탠리","투자"]},
+{name:"Berkshire Hathaway",icon:"🎩",url:"https://www.berkshirehathaway.com/news/",desc:"Berkshire 뉴스",cat:"invest",tags:["berkshire","버크셔해서웨이","워런버핏"]},
+{name:"KKR",icon:"🏦",url:"https://ir.kkr.com/news-and-events/press-releases",desc:"KKR 보도자료",cat:"invest",tags:["kkr","사모펀드","투자"]},
+{name:"Blackstone",icon:"🖤",url:"https://ir.blackstone.com/news-and-events/press-releases",desc:"Blackstone 보도자료",cat:"invest",tags:["blackstone","블랙스톤","사모펀드","부동산"]},
+{name:"Carlyle Group",icon:"🎪",url:"https://ir.carlyle.com/news-releases",desc:"Carlyle 보도자료",cat:"invest",tags:["carlyle","칼라일","사모펀드"]},
+{name:"Apollo Global",icon:"🌙",url:"https://ir.apollo.com/news-releases/news-release-details/",desc:"Apollo 보도자료",cat:"invest",tags:["apollo","아폴로","사모펀드"]},
+{name:"Sequoia Capital",icon:"🌲",url:"https://www.sequoiacap.com/",desc:"Sequoia Capital",cat:"invest",tags:["sequoia","세쿼이아","벤처캐피탈","실리콘밸리"]},
+{name:"a16z (Andreessen)",icon:"💡",url:"https://a16z.com/news/",desc:"a16z 뉴스",cat:"invest",tags:["a16z","andreessen","벤처캐피탈"]},
+{name:"SoftBank Vision Fund",icon:"🤖",url:"https://www.softbank.jp/en/corp/news/",desc:"SoftBank 뉴스",cat:"invest",tags:["softbank","소프트뱅크","비전펀드"]},
+{name:"두나무",icon:"🍁",url:"https://dunamu.com/news",desc:"두나무(업비트) 뉴스룸",cat:"invest",tags:["두나무","업비트","암호화폐"]},
+
+// 🏧 은행 / 보험
+{name:"JP Morgan",icon:"🏦",url:"https://www.jpmorganchase.com/news-stories",desc:"JPMorgan Chase 뉴스",cat:"bank",tags:["jpmorgan","제이피모건","은행"]},
+{name:"Bank of America",icon:"🏦",url:"https://newsroom.bankofamerica.com/",desc:"BofA Newsroom",cat:"bank",tags:["bank of america","뱅크오브아메리카","은행"]},
+{name:"Citigroup",icon:"🏙️",url:"https://www.citigroup.com/global/news/",desc:"Citigroup 뉴스",cat:"bank",tags:["citi","씨티","은행"]},
+{name:"Wells Fargo",icon:"🐎",url:"https://newsroom.wf.com/",desc:"Wells Fargo 뉴스룸",cat:"bank",tags:["wells fargo","웰스파고","은행"]},
+{name:"UBS",icon:"🏦",url:"https://www.ubs.com/global/en/media/display-page-ndp/en-20230101-ubs-media-releases.html",desc:"UBS 보도자료",cat:"bank",tags:["ubs","스위스","은행"]},
+{name:"HSBC",icon:"🔴",url:"https://www.hsbc.com/news-and-media/media-releases",desc:"HSBC 뉴스",cat:"bank",tags:["hsbc","은행","영국"]},
+{name:"Deutsche Bank",icon:"🔵",url:"https://www.db.com/news",desc:"Deutsche Bank 뉴스",cat:"bank",tags:["deutsche bank","도이체방크","독일","은행"]},
+{name:"BNP Paribas",icon:"🏛️",url:"https://group.bnpparibas/en/news",desc:"BNP Paribas 뉴스",cat:"bank",tags:["bnp paribas","비엔피파리바","프랑스","은행"]},
+{name:"KB금융",icon:"🏧",url:"https://www.kbfg.com/KBlifestory/board/newsBoardList.do",desc:"KB금융 뉴스룸",cat:"bank",tags:["kb","국민은행","금융"]},
+{name:"신한금융",icon:"🔵",url:"https://www.shinhangroup.com/kr/media/pressRelease.do",desc:"신한금융 보도자료",cat:"bank",tags:["신한","shinhan","은행"]},
+{name:"하나금융",icon:"🟠",url:"https://www.hanafn.com/cf/pr/list.do",desc:"하나금융 보도자료",cat:"bank",tags:["하나금융","하나은행"]},
+{name:"우리금융",icon:"🟢",url:"https://www.woorifg.com/kor/pr/newsRelease/list.do",desc:"우리금융 보도자료",cat:"bank",tags:["우리금융","우리은행"]},
+{name:"Allianz",icon:"🛡️",url:"https://www.allianz.com/en/press/news/",desc:"Allianz 뉴스룸",cat:"bank",tags:["allianz","알리안츠","보험","독일"]},
+{name:"AXA",icon:"🔷",url:"https://www.axa.com/en/press/press-releases",desc:"AXA 보도자료",cat:"bank",tags:["axa","악사","보험","프랑스"]},
+{name:"Prudential",icon:"🪨",url:"https://news.prudential.com/",desc:"Prudential 뉴스룸",cat:"bank",tags:["prudential","프루덴셜","보험"]},
+{name:"삼성생명",icon:"💎",url:"https://www.samsunglife.com/individual/pr/news/list.do",desc:"삼성생명 보도자료",cat:"bank",tags:["삼성생명","보험"]},
+{name:"한화생명",icon:"🌸",url:"https://www.hanwhalife.com/media/news/list.do",desc:"한화생명 뉴스",cat:"bank",tags:["한화생명","보험"]},
+
+// 💳 결제 / 핀테크
+{name:"Visa",icon:"💳",url:"https://usa.visa.com/about-visa/newsroom.html",desc:"Visa 뉴스룸",cat:"fintech",tags:["visa","비자","카드","결제"]},
+{name:"Mastercard",icon:"🔴",url:"https://www.mastercard.com/news/press/",desc:"Mastercard 보도자료",cat:"fintech",tags:["mastercard","마스터카드","결제"]},
+{name:"PayPal",icon:"🅿️",url:"https://newsroom.paypal-corp.com/",desc:"PayPal Newsroom",cat:"fintech",tags:["paypal","페이팔","결제"]},
+{name:"Stripe",icon:"💜",url:"https://stripe.com/newsroom/news",desc:"Stripe 뉴스룸",cat:"fintech",tags:["stripe","스트라이프","결제"]},
+{name:"Square (Block)",icon:"◼️",url:"https://squareup.com/us/en/press",desc:"Block/Square 뉴스",cat:"fintech",tags:["square","block","스퀘어","핀테크"]},
+{name:"Coinbase",icon:"🪙",url:"https://www.coinbase.com/blog/category/company-news",desc:"Coinbase 뉴스",cat:"fintech",tags:["coinbase","코인베이스","암호화폐"]},
+{name:"토스",icon:"📲",url:"https://toss.im/newsroom",desc:"토스 뉴스룸",cat:"fintech",tags:["토스","toss","핀테크"]},
+{name:"카카오페이",icon:"💛",url:"https://www.kakaopay.com/newsroom",desc:"카카오페이 뉴스룸",cat:"fintech",tags:["카카오페이","핀테크"]},
+{name:"Ant Group",icon:"🐜",url:"https://www.antgroup.com/en/news",desc:"Ant Group 뉴스",cat:"fintech",tags:["ant group","앤트그룹","알리페이","중국"]},
+{name:"Revolut",icon:"🌀",url:"https://www.revolut.com/en-US/news/",desc:"Revolut 뉴스룸",cat:"fintech",tags:["revolut","레볼루트","핀테크","영국"]},
+{name:"Klarna",icon:"🩷",url:"https://www.klarna.com/international/press/",desc:"Klarna 보도자료",cat:"fintech",tags:["klarna","클라나","후불결제","스웨덴"]},
+{name:"Adyen",icon:"💚",url:"https://www.adyen.com/news",desc:"Adyen 뉴스룸",cat:"fintech",tags:["adyen","아디옌","결제","네덜란드"]},
+{name:"SBI Holdings",icon:"🏦",url:"https://www.sbigroup.co.jp/english/news/",desc:"SBI Holdings 뉴스",cat:"fintech",tags:["sbi","금융","일본"]},
+{name:"네이버페이",icon:"🟢",url:"https://www.navercorp.com/navercorp_/company/news/news/list.nhn",desc:"네이버페이 뉴스",cat:"fintech",tags:["네이버페이","결제","간편결제"]},
+
+// 💊 제약 / 바이오
+{name:"Pfizer",icon:"💉",url:"https://www.pfizer.com/news/press-release",desc:"Pfizer 보도자료",cat:"pharma",tags:["pfizer","화이자","제약","백신"]},
+{name:"Johnson & Johnson",icon:"🏥",url:"https://www.jnj.com/latest-news",desc:"J&J 최신 뉴스",cat:"pharma",tags:["j&j","존슨앤존슨","제약"]},
+{name:"Moderna",icon:"🧬",url:"https://investors.modernatx.com/news-releases/news-releases-overview",desc:"Moderna 보도자료",cat:"pharma",tags:["moderna","모더나","mRNA","백신"]},
+{name:"Roche",icon:"🔬",url:"https://www.roche.com/media/releases",desc:"Roche 보도자료",cat:"pharma",tags:["roche","로슈","제약","진단"]},
+{name:"Novartis",icon:"💊",url:"https://www.novartis.com/news/media-releases",desc:"Novartis 보도자료",cat:"pharma",tags:["novartis","노바티스","제약"]},
+{name:"AstraZeneca",icon:"🧪",url:"https://www.astrazeneca.com/media-centre/press-releases.html",desc:"AZ 보도자료",cat:"pharma",tags:["astrazeneca","아스트라제네카","제약","백신"]},
+{name:"Eli Lilly",icon:"💊",url:"https://investor.lilly.com/news-releases/news-release-details/",desc:"Eli Lilly 보도자료",cat:"pharma",tags:["eli lilly","엘리릴리","제약"]},
+{name:"Merck",icon:"⚕️",url:"https://www.merck.com/media/news/",desc:"Merck 뉴스룸",cat:"pharma",tags:["merck","머크","제약","msd"]},
+{name:"Novo Nordisk",icon:"💉",url:"https://www.novonordisk.com/news-and-media/news-and-ir-materials.html",desc:"Novo Nordisk 뉴스",cat:"pharma",tags:["novo nordisk","노보노디스크","덴마크"]},
+{name:"GSK",icon:"🏥",url:"https://www.gsk.com/en-gb/media/press-releases/",desc:"GSK 보도자료",cat:"pharma",tags:["gsk","글락소스미스클라인","제약","영국"]},
+{name:"Sanofi",icon:"💉",url:"https://www.sanofi.com/en/media-room/press-releases",desc:"Sanofi 보도자료",cat:"pharma",tags:["sanofi","사노피","제약","프랑스"]},
+{name:"Bayer",icon:"⚕️",url:"https://media.bayer.com/baynews/baynews.nsf/id/Press-Releases",desc:"Bayer 보도자료",cat:"pharma",tags:["bayer","바이엘","제약","독일"]},
+{name:"BioNTech",icon:"💉",url:"https://investors.biontech.de/news-releases/news-release-details/",desc:"BioNTech 보도자료",cat:"pharma",tags:["biontech","바이온텍","mRNA","독일"]},
+{name:"Bristol-Myers Squibb",icon:"💊",url:"https://news.bms.com/",desc:"BMS 뉴스룸",cat:"pharma",tags:["bms","브리스톨마이어스","제약"]},
+{name:"Gilead Sciences",icon:"🧬",url:"https://www.gilead.com/news-and-press/press-room",desc:"Gilead 보도자료",cat:"pharma",tags:["gilead","길리어드","바이오"]},
+{name:"Amgen",icon:"🔬",url:"https://www.amgen.com/media/news-releases",desc:"Amgen 보도자료",cat:"pharma",tags:["amgen","암젠","바이오"]},
+{name:"삼성바이오로직스",icon:"🔬",url:"https://www.samsungbiologics.com/aboutus/news.do",desc:"삼성바이오 뉴스",cat:"pharma",tags:["삼성바이오","바이오","제약"]},
+{name:"셀트리온",icon:"🧫",url:"https://www.celltrion.com/ko/news/list.do",desc:"셀트리온 보도자료",cat:"pharma",tags:["셀트리온","바이오"]},
+{name:"유한양행",icon:"💊",url:"https://www.yuhan.co.kr/Media/Press/List.asp",desc:"유한양행 보도자료",cat:"pharma",tags:["유한양행","제약"]},
+{name:"한미약품",icon:"🏥",url:"https://www.hanmipharm.com/information/news.do",desc:"한미약품 보도자료",cat:"pharma",tags:["한미약품","제약","신약"]},
+{name:"Takeda",icon:"🔬",url:"https://www.takeda.com/newsroom/",desc:"Takeda 뉴스룸",cat:"pharma",tags:["takeda","다케다","제약","일본"]},
+{name:"Regeneron",icon:"🧪",url:"https://investor.regeneron.com/news-releases",desc:"Regeneron 뉴스",cat:"pharma",tags:["regeneron","리제네론","바이오"]},
+{name:"Vertex Pharmaceuticals",icon:"⬡",url:"https://investors.vrtx.com/news-releases/news-release-details/",desc:"Vertex 보도자료",cat:"pharma",tags:["vertex","버텍스","희귀질환"]},
+{name:"Biogen",icon:"🧬",url:"https://investors.biogen.com/news-releases/news-release-details/",desc:"Biogen 보도자료",cat:"pharma",tags:["biogen","바이오젠","신경계"]},
+{name:"Daiichi Sankyo",icon:"💊",url:"https://www.daiichisankyo.com/media_investors/media_relations/press_releases/",desc:"Daiichi Sankyo 뉴스",cat:"pharma",tags:["daiichi sankyo","다이이치산쿄","일본"]},
+
+// 🏥 의료기기 / 헬스케어
+{name:"Abbott",icon:"🔬",url:"https://abbott.mediaroom.com/",desc:"Abbott 뉴스룸",cat:"medical",tags:["abbott","애보트","의료기기","진단"]},
+{name:"Medtronic",icon:"❤️",url:"https://newsroom.medtronic.com/",desc:"Medtronic 뉴스룸",cat:"medical",tags:["medtronic","메드트로닉","의료기기"]},
+{name:"Stryker",icon:"🦴",url:"https://ir.stryker.com/news-releases/news-release-details/",desc:"Stryker 보도자료",cat:"medical",tags:["stryker","스트라이커","의료기기","정형외과"]},
+{name:"Boston Scientific",icon:"💗",url:"https://news.bostonscientific.com/",desc:"Boston Scientific 뉴스",cat:"medical",tags:["boston scientific","보스턴사이언티픽","의료기기"]},
+{name:"Zimmer Biomet",icon:"🦷",url:"https://investor.zimmerbiomet.com/news-releases/",desc:"Zimmer Biomet 뉴스",cat:"medical",tags:["zimmer biomet","정형외과","임플란트"]},
+{name:"Becton Dickinson",icon:"💉",url:"https://www.bd.com/en-us/company/news-and-media/news",desc:"BD 뉴스룸",cat:"medical",tags:["bd","becton dickinson","의료기기"]},
+{name:"Philips",icon:"💡",url:"https://www.philips.com/a-w/about/news/media.html",desc:"Philips 뉴스룸",cat:"medical",tags:["philips","필립스","의료","전자","네덜란드"]},
+{name:"Siemens Healthineers",icon:"🏥",url:"https://www.siemens-healthineers.com/en-us/news",desc:"Siemens Healthineers 뉴스",cat:"medical",tags:["siemens healthineers","지멘스","의료기기"]},
+{name:"GE HealthCare",icon:"🏥",url:"https://www.gehealthcare.com/about/newsroom",desc:"GE HealthCare 뉴스",cat:"medical",tags:["ge healthcare","의료기기","영상진단"]},
+{name:"Hologic",icon:"🩺",url:"https://investors.hologic.com/news-releases/news-release-details/",desc:"Hologic 보도자료",cat:"medical",tags:["hologic","홀로직","여성건강","진단"]},
+{name:"바디프렌드",icon:"💆",url:"https://www.bodyfriend.co.kr/news/notice",desc:"바디프렌드 뉴스",cat:"medical",tags:["바디프렌드","안마의자","헬스케어"]},
+{name:"오스템임플란트",icon:"🦷",url:"https://www.ostemimplant.com/ko/about/news.do",desc:"오스템임플란트 뉴스",cat:"medical",tags:["오스템","임플란트","치과"]},
+{name:"강스템바이오텍",icon:"🔬",url:"https://www.kangstem.com/news/",desc:"강스템바이오텍 뉴스",cat:"medical",tags:["강스템","바이오","줄기세포"]},
+
+// 🛒 유통 / 이커머스
+{name:"Walmart",icon:"🛒",url:"https://corporate.walmart.com/newsroom",desc:"Walmart Newsroom",cat:"retail",tags:["walmart","월마트","유통"]},
+{name:"쿠팡",icon:"📦",url:"https://news.coupang.com/",desc:"쿠팡 뉴스룸",cat:"retail",tags:["쿠팡","이커머스"]},
+{name:"Costco",icon:"🏪",url:"https://investor.costco.com/news-releases/news-release-details/",desc:"Costco 보도자료",cat:"retail",tags:["costco","코스트코","유통"]},
+{name:"Target",icon:"🎯",url:"https://corporate.target.com/press/releases/",desc:"Target 뉴스룸",cat:"retail",tags:["target","타겟","유통"]},
+{name:"IKEA",icon:"🪑",url:"https://www.ikea.com/global/en/newsroom/",desc:"IKEA Newsroom",cat:"retail",tags:["ikea","이케아","가구","스웨덴"]},
+{name:"롯데",icon:"🏬",url:"https://www.lotte.com/ko/media/news/list.do",desc:"롯데 뉴스룸",cat:"retail",tags:["롯데","유통"]},
+{name:"현대백화점",icon:"🏬",url:"https://www.ehyundai.com/newPortal/DP/DP010501_V.do",desc:"현대백화점 뉴스",cat:"retail",tags:["현대백화점","백화점","유통"]},
+{name:"신세계",icon:"🛍️",url:"https://www.shinsegaegroupinc.com/kr/news/newsList.do",desc:"신세계 뉴스룸",cat:"retail",tags:["신세계","백화점","유통"]},
+{name:"이마트",icon:"🛒",url:"https://company.emart.com/news/notice.do",desc:"이마트 뉴스룸",cat:"retail",tags:["이마트","마트","유통"]},
+{name:"eBay",icon:"🏷️",url:"https://www.ebayinc.com/stories/press-room/",desc:"eBay 뉴스룸",cat:"retail",tags:["ebay","이베이","이커머스"]},
+{name:"JD.com",icon:"🐶",url:"https://ir.jd.com/news-releases/",desc:"JD.com 보도자료",cat:"retail",tags:["jd.com","징동","이커머스","중국"]},
+{name:"Pinduoduo (PDD)",icon:"🛒",url:"https://investor.pddholdings.com/news-releases/",desc:"PDD Holdings 뉴스",cat:"retail",tags:["pdd","temu","테무","이커머스","중국"]},
+{name:"Rakuten",icon:"🎋",url:"https://global.rakuten.com/corp/news/",desc:"Rakuten 뉴스룸",cat:"retail",tags:["rakuten","라쿠텐","이커머스","일본"]},
+{name:"Carrefour",icon:"🏪",url:"https://www.carrefour.com/en/news",desc:"Carrefour 뉴스룸",cat:"retail",tags:["carrefour","까르푸","유통","프랑스"]},
+{name:"홈플러스",icon:"🏪",url:"https://corporate.homeplus.co.kr/news/list.do",desc:"홈플러스 뉴스",cat:"retail",tags:["홈플러스","마트","유통"]},
+
+// 👗 패션 / 명품
+{name:"LVMH",icon:"👜",url:"https://www.lvmh.com/news-documents/press-releases/",desc:"LVMH 보도자료",cat:"fashion",tags:["lvmh","루이비통","명품","프랑스"]},
+{name:"Hermès",icon:"🧣",url:"https://www.hermes.com/us/en/content/317374-news/",desc:"Hermès 뉴스",cat:"fashion",tags:["hermes","에르메스","명품","프랑스"]},
+{name:"Gucci (Kering)",icon:"👓",url:"https://www.kering.com/en/news/",desc:"Kering 뉴스룸",cat:"fashion",tags:["gucci","구찌","kering","명품"]},
+{name:"Chanel",icon:"🖤",url:"https://www.chanel.com/us/about-chanel/news/",desc:"Chanel 뉴스",cat:"fashion",tags:["chanel","샤넬","명품"]},
+{name:"Richemont",icon:"💎",url:"https://www.richemont.com/media/press-releases/",desc:"Richemont 뉴스",cat:"fashion",tags:["richemont","리치몬트","카르티에","명품"]},
+{name:"Nike",icon:"👟",url:"https://investors.nike.com/investors/news-events-and-reports/press-releases/default.aspx",desc:"Nike 보도자료",cat:"fashion",tags:["nike","나이키","스포츠"]},
+{name:"Adidas",icon:"👟",url:"https://www.adidas-group.com/en/media/news-archive/",desc:"Adidas 뉴스룸",cat:"fashion",tags:["adidas","아디다스","스포츠"]},
+{name:"Zara (Inditex)",icon:"👗",url:"https://www.inditex.com/en/our-story/news",desc:"Inditex 뉴스룸",cat:"fashion",tags:["zara","자라","inditex","패션"]},
+{name:"H&M",icon:"👕",url:"https://hmgroup.com/news/",desc:"H&M Group 뉴스",cat:"fashion",tags:["h&m","에이치앤엠","패션","스웨덴"]},
+{name:"Uniqlo (Fast Retailing)",icon:"👕",url:"https://www.fastretailing.com/eng/ir/news/",desc:"Fast Retailing 뉴스",cat:"fashion",tags:["uniqlo","유니클로","패션","일본"]},
+{name:"Burberry",icon:"🟥",url:"https://www.burberryplc.com/en/news/media.html",desc:"Burberry 뉴스",cat:"fashion",tags:["burberry","버버리","명품","영국"]},
+{name:"Prada",icon:"▲",url:"https://www.pradagroup.com/en/media/press-releases.html",desc:"Prada 뉴스룸",cat:"fashion",tags:["prada","프라다","명품","이탈리아"]},
+{name:"Lululemon",icon:"🧘",url:"https://investor.lululemon.com/news-releases/",desc:"Lululemon 뉴스",cat:"fashion",tags:["lululemon","룰루레몬","스포츠","요가"]},
+{name:"Under Armour",icon:"🏋️",url:"https://about.underarmour.com/en-us/press.html",desc:"Under Armour 뉴스",cat:"fashion",tags:["under armour","언더아머","스포츠"]},
+{name:"삼성물산 패션",icon:"👔",url:"https://www.samsungcnt.com/kor/media/news.do",desc:"삼성물산 뉴스룸",cat:"fashion",tags:["삼성물산","패션","빈폴"]},
+
+// 🍔 식품 / 음료
+{name:"Coca-Cola",icon:"🥤",url:"https://www.coca-colacompany.com/media-center/press-releases",desc:"Coca-Cola 보도자료",cat:"food",tags:["coca-cola","코카콜라","음료"]},
+{name:"PepsiCo",icon:"🫙",url:"https://www.pepsico.com/news/press-releases",desc:"PepsiCo 보도자료",cat:"food",tags:["pepsi","펩시","음료","식품"]},
+{name:"McDonald's",icon:"🍔",url:"https://corporate.mcdonalds.com/corpmcd/our-stories/article.html",desc:"McDonald's Newsroom",cat:"food",tags:["mcdonalds","맥도날드","패스트푸드"]},
+{name:"Nestlé",icon:"🍫",url:"https://www.nestle.com/media/pressreleases",desc:"Nestlé 보도자료",cat:"food",tags:["nestle","네슬레","식품","스위스"]},
+{name:"Starbucks",icon:"☕",url:"https://investor.starbucks.com/press-releases/default.aspx",desc:"Starbucks 보도자료",cat:"food",tags:["starbucks","스타벅스","커피"]},
+{name:"Unilever",icon:"🧴",url:"https://www.unilever.com/news/press-and-media/",desc:"Unilever 뉴스룸",cat:"food",tags:["unilever","유니레버","식품","소비재"]},
+{name:"Kraft Heinz",icon:"🍅",url:"https://ir.kraftheinzcompany.com/news-releases/news-release-details/",desc:"Kraft Heinz 뉴스",cat:"food",tags:["kraft heinz","크래프트하인즈","식품"]},
+{name:"Mondelez",icon:"🍪",url:"https://ir.mondelezinternational.com/news-releases/news-release-details/",desc:"Mondelez 보도자료",cat:"food",tags:["mondelez","몬델리즈","오레오","식품"]},
+{name:"General Mills",icon:"🥣",url:"https://investor.generalmills.com/press-releases",desc:"General Mills 뉴스",cat:"food",tags:["general mills","제너럴밀스","식품"]},
+{name:"Danone",icon:"🥛",url:"https://www.danone.com/media/press-releases-list.html",desc:"Danone 보도자료",cat:"food",tags:["danone","다논","유제품","프랑스"]},
+{name:"CJ제일제당",icon:"🍱",url:"https://www.cj.co.kr/kr/media/news",desc:"CJ제일제당 뉴스룸",cat:"food",tags:["cj제일제당","비비고","식품"]},
+{name:"농심",icon:"🍜",url:"https://www.nongshim.com/media/news/list",desc:"농심 뉴스룸",cat:"food",tags:["농심","신라면","라면","식품"]},
+{name:"오리온",icon:"🍫",url:"https://www.orionworld.com/korea/ko/board/press",desc:"오리온 보도자료",cat:"food",tags:["오리온","초코파이","식품"]},
+{name:"롯데웰푸드",icon:"🍬",url:"https://www.lottecorp.com/ko/media/news/list.do",desc:"롯데웰푸드 뉴스",cat:"food",tags:["롯데웰푸드","과자","식품"]},
+{name:"풀무원",icon:"🥗",url:"https://www.pulmuone.co.kr/pulmuone/irpr/news/list.do",desc:"풀무원 보도자료",cat:"food",tags:["풀무원","식품","두부"]},
+{name:"Tyson Foods",icon:"🍗",url:"https://ir.tysonfoods.com/news-releases/news-release-details/",desc:"Tyson Foods 뉴스",cat:"food",tags:["tyson","타이슨","육류","식품"]},
+{name:"Kellogg's",icon:"🌾",url:"https://investor.kelloggs.com/news-releases/news-release-details/",desc:"Kellogg's 뉴스",cat:"food",tags:["kelloggs","켈로그","시리얼","식품"]},
+{name:"Mars",icon:"🍬",url:"https://www.mars.com/news-and-stories",desc:"Mars 뉴스",cat:"food",tags:["mars","마스","초콜릿","식품"]},
+{name:"Ferrero",icon:"🍫",url:"https://www.ferrerocsr.com/news",desc:"Ferrero 뉴스",cat:"food",tags:["ferrero","페레로로쉐","누텔라","식품"]},
+{name:"Yum! Brands",icon:"🍕",url:"https://www.yum.com/wps/portal/yumbrands/Yumbrands/news/",desc:"Yum! Brands 뉴스",cat:"food",tags:["yum","KFC","피자헛","타코벨"]},
+
+// 🍺 주류 / 담배
+{name:"AB InBev",icon:"🍺",url:"https://www.ab-inbev.com/news/",desc:"AB InBev 뉴스룸",cat:"beverage",tags:["ab inbev","버드와이저","맥주","벨기에"]},
+{name:"Heineken",icon:"🍻",url:"https://www.theheinekencompany.com/media/media-releases",desc:"Heineken 뉴스",cat:"beverage",tags:["heineken","하이네켄","맥주","네덜란드"]},
+{name:"Diageo",icon:"🥃",url:"https://www.diageo.com/en/news-and-media/press-releases/",desc:"Diageo 보도자료",cat:"beverage",tags:["diageo","디아지오","위스키","주류","영국"]},
+{name:"Pernod Ricard",icon:"🍷",url:"https://www.pernod-ricard.com/en/media/press-releases/",desc:"Pernod Ricard 보도자료",cat:"beverage",tags:["pernod ricard","페르노리카","와인","주류"]},
+{name:"하이트진로",icon:"🍻",url:"https://www.hitejinro.com/pr/press_list.asp",desc:"하이트진로 보도자료",cat:"beverage",tags:["하이트진로","맥주","소주"]},
+{name:"오비맥주",icon:"🍺",url:"https://company.obhite.com/news/press-release.do",desc:"OB맥주 보도자료",cat:"beverage",tags:["오비맥주","맥주","카스"]},
+{name:"Philip Morris",icon:"🚬",url:"https://www.pmi.com/media-center/news",desc:"PMI 뉴스룸",cat:"beverage",tags:["philip morris","필립모리스","담배","iqos"]},
+{name:"British American Tobacco",icon:"🚬",url:"https://www.bat.com/group/sites/UK__9D9KCY.nsf/vwPagesWebLive/DO9DCLZZ",desc:"BAT 보도자료",cat:"beverage",tags:["bat","british american tobacco","담배","영국"]},
+{name:"LVMH Wines",icon:"🍷",url:"https://www.lvmh.com/news-documents/press-releases/",desc:"LVMH 와인 & 스피릿",cat:"beverage",tags:["lvmh","모에샹동","와인","샴페인"]},
+{name:"Brown-Forman",icon:"🥃",url:"https://ir.brown-forman.com/news-releases/news-release-details/",desc:"Brown-Forman 뉴스",cat:"beverage",tags:["brown forman","잭다니엘","버번","위스키"]},
+
+// 🧴 생활용품 / 뷰티
+{name:"Procter & Gamble",icon:"🧼",url:"https://news.pg.com/",desc:"P&G 뉴스룸",cat:"beauty",tags:["p&g","procter gamble","생활용품","세제"]},
+{name:"Colgate-Palmolive",icon:"🦷",url:"https://www.colgatepalmolive.com/en-us/about-us/newsroom",desc:"Colgate 뉴스룸",cat:"beauty",tags:["colgate","콜게이트","치약","생활용품"]},
+{name:"L'Oréal",icon:"💄",url:"https://mediaroom.loreal.com/en/home/",desc:"L'Oréal 미디어룸",cat:"beauty",tags:["loreal","로레알","뷰티","화장품","프랑스"]},
+{name:"Estée Lauder",icon:"🌸",url:"https://www.elcompanies.com/en/news-and-media/newsroom",desc:"ELC 뉴스룸",cat:"beauty",tags:["estee lauder","에스티로더","뷰티","화장품"]},
+{name:"Shiseido",icon:"🌺",url:"https://www.shiseido.com/en/news/",desc:"Shiseido 뉴스룸",cat:"beauty",tags:["shiseido","시세이도","뷰티","일본"]},
+{name:"Beiersdorf",icon:"🧴",url:"https://www.beiersdorf.com/media/press-releases",desc:"Beiersdorf(NIVEA) 뉴스",cat:"beauty",tags:["beiersdorf","nivea","니베아","스킨케어"]},
+{name:"Henkel",icon:"🧺",url:"https://www.henkel.com/press-and-media/press-releases-and-kits",desc:"Henkel 보도자료",cat:"beauty",tags:["henkel","헨켈","세제","생활용품","독일"]},
+{name:"Kimberly-Clark",icon:"🧻",url:"https://investor.kimberly-clark.com/news-releases",desc:"Kimberly-Clark 뉴스",cat:"beauty",tags:["kimberly clark","킴벌리클락","화장지","기저귀"]},
+{name:"아모레퍼시픽",icon:"🌺",url:"https://www.amorepacific.com/content/ap_kr/ko/media/news/press.html",desc:"아모레퍼시픽 보도자료",cat:"beauty",tags:["아모레퍼시픽","화장품","뷰티"]},
+{name:"LG생활건강",icon:"💄",url:"https://www.lgcare.com/kr/company/newscenter/newsList.do",desc:"LG생활건강 뉴스",cat:"beauty",tags:["lg생활건강","화장품","뷰티"]},
+{name:"Coty",icon:"💅",url:"https://investors.coty.com/news-releases/news-release-details/",desc:"Coty 뉴스",cat:"beauty",tags:["coty","코티","향수","뷰티"]},
+{name:"Bath & Body Works",icon:"🛁",url:"https://www.bbwinc.com/press/",desc:"Bath & Body Works 뉴스",cat:"beauty",tags:["bath body works","생활용품","향수"]},
+
+// 🏗️ 건설 / 부동산
+{name:"현대건설",icon:"🏗️",url:"https://www.hdec.kr/ko/media/press-list.do",desc:"현대건설 보도자료",cat:"construction",tags:["현대건설","건설","인프라"]},
+{name:"삼성물산",icon:"🏢",url:"https://www.samsungcnt.com/kor/media/news.do",desc:"삼성물산 뉴스룸",cat:"construction",tags:["삼성물산","건설","무역"]},
+{name:"GS건설",icon:"🔨",url:"https://www.gsconst.co.kr/kor/media/press-release.do",desc:"GS건설 보도자료",cat:"construction",tags:["gs건설","자이","건설"]},
+{name:"대우건설",icon:"🏛️",url:"https://www.daewooenc.com/ko/pr/news/list.do",desc:"대우건설 보도자료",cat:"construction",tags:["대우건설","건설"]},
+{name:"DL이앤씨",icon:"🏗️",url:"https://www.dlenc.co.kr/media/press.do",desc:"DL이앤씨 보도자료",cat:"construction",tags:["dl이앤씨","대림","건설"]},
+{name:"포스코이앤씨",icon:"⚙️",url:"https://www.poscoenc.com/kor/media/press/list.do",desc:"포스코이앤씨 뉴스",cat:"construction",tags:["포스코이앤씨","건설"]},
+{name:"Vinci",icon:"🌉",url:"https://www.vinci.com/vinci.nsf/en/press-releases.htm",desc:"Vinci 보도자료",cat:"construction",tags:["vinci","방시","건설","인프라","프랑스"]},
+{name:"Bechtel",icon:"🏗️",url:"https://www.bechtel.com/newsroom/",desc:"Bechtel 뉴스룸",cat:"construction",tags:["bechtel","벡텔","건설","엔지니어링"]},
+{name:"CBRE",icon:"🏢",url:"https://www.cbre.com/press-releases",desc:"CBRE 보도자료",cat:"construction",tags:["cbre","부동산","상업용"]},
+{name:"JLL",icon:"🏙️",url:"https://www.jll.com/en/newsroom",desc:"JLL 뉴스룸",cat:"construction",tags:["jll","부동산","자산관리"]},
+{name:"Prologis",icon:"📦",url:"https://ir.prologis.com/news-releases/",desc:"Prologis 뉴스",cat:"construction",tags:["prologis","물류센터","리츠","부동산"]},
+{name:"Brookfield",icon:"🌲",url:"https://www.brookfield.com/news",desc:"Brookfield 뉴스룸",cat:"construction",tags:["brookfield","부동산","자산운용"]},
+{name:"Skanska",icon:"🟡",url:"https://group.skanska.com/media/press-releases/",desc:"Skanska 보도자료",cat:"construction",tags:["skanska","스칸스카","건설","스웨덴"]},
+{name:"ACS Group",icon:"🏛️",url:"https://www.grupoacs.com/en/sustainability/communication/press-releases/",desc:"ACS 보도자료",cat:"construction",tags:["acs","건설","스페인"]},
+{name:"롯데건설",icon:"🏢",url:"https://www.lottecon.co.kr/company/media/news.do",desc:"롯데건설 뉴스",cat:"construction",tags:["롯데건설","건설","롯데캐슬"]},
+
+// ✈️ 항공 / 크루즈
+{name:"대한항공",icon:"✈️",url:"https://www.koreanair.com/content/koreanair/kr/ko/about/news-room/news.html",desc:"대한항공 뉴스룸",cat:"airline",tags:["대한항공","항공","한국"]},
+{name:"아시아나항공",icon:"🛫",url:"https://flyasiana.com/C/KR/KO/news/press-release/list",desc:"아시아나 보도자료",cat:"airline",tags:["아시아나","항공","한국"]},
+{name:"United Airlines",icon:"✈️",url:"https://hub.united.com/",desc:"United 뉴스룸",cat:"airline",tags:["united","유나이티드항공","미국"]},
+{name:"Delta Air Lines",icon:"🔺",url:"https://news.delta.com/",desc:"Delta Newsroom",cat:"airline",tags:["delta","델타항공","미국"]},
+{name:"American Airlines",icon:"🦅",url:"https://news.aa.com/",desc:"American Airlines 뉴스룸",cat:"airline",tags:["american airlines","아메리칸항공","미국"]},
+{name:"Lufthansa",icon:"🦅",url:"https://www.lufthansagroup.com/en/newsroom/releases.html",desc:"Lufthansa 뉴스룸",cat:"airline",tags:["lufthansa","루프트한자","독일"]},
+{name:"Emirates",icon:"🌟",url:"https://www.emirates.com/english/about/news/",desc:"Emirates 뉴스",cat:"airline",tags:["emirates","에미레이트","두바이"]},
+{name:"Singapore Airlines",icon:"🦁",url:"https://www.singaporeair.com/en_UK/sg/media-centre/press-release/",desc:"SIA 보도자료",cat:"airline",tags:["singapore airlines","싱가포르항공"]},
+{name:"Southwest Airlines",icon:"❤️",url:"https://swamedia.com/",desc:"Southwest 뉴스룸",cat:"airline",tags:["southwest","사우스웨스트","항공"]},
+{name:"Carnival Corporation",icon:"🚢",url:"https://www.carnivalcorp.com/news-releases/news-release-details/",desc:"Carnival 뉴스",cat:"airline",tags:["carnival","카니발","크루즈"]},
+{name:"Royal Caribbean",icon:"🛳️",url:"https://ir.rclcorporate.com/news-releases/",desc:"Royal Caribbean 뉴스",cat:"airline",tags:["royal caribbean","로얄캐리비안","크루즈"]},
+{name:"Ryanair",icon:"🟡",url:"https://www.ryanair.com/gb/en/useful-info/about-ryanair/news",desc:"Ryanair 뉴스",cat:"airline",tags:["ryanair","라이언에어","저가항공","아일랜드"]},
+{name:"easyJet",icon:"🟠",url:"https://corporate.easyjet.com/media/latest-news",desc:"easyJet 뉴스",cat:"airline",tags:["easyjet","이지젯","저가항공","영국"]},
+{name:"제주항공",icon:"✈️",url:"https://www.jejuair.net/jejuair/kr/customer/notice/list.do",desc:"제주항공 뉴스",cat:"airline",tags:["제주항공","저가항공","한국"]},
+{name:"에어아시아",icon:"🔴",url:"https://newsroom.airasia.com/",desc:"AirAsia 뉴스룸",cat:"airline",tags:["airasia","에어아시아","저가항공","말레이시아"]},
+
+// 🏨 호텔 / 여행
+{name:"Marriott",icon:"🏨",url:"https://news.marriott.com/",desc:"Marriott 뉴스룸",cat:"hotel",tags:["marriott","메리어트","호텔"]},
+{name:"Hilton",icon:"🏩",url:"https://newsroom.hilton.com/",desc:"Hilton Newsroom",cat:"hotel",tags:["hilton","힐튼","호텔"]},
+{name:"Hyatt",icon:"🏪",url:"https://newsroom.hyatt.com/",desc:"Hyatt Newsroom",cat:"hotel",tags:["hyatt","하얏트","호텔"]},
+{name:"IHG",icon:"🌐",url:"https://www.ihgplc.com/en/news-and-media/latest-news",desc:"IHG 뉴스룸",cat:"hotel",tags:["ihg","인터컨티넨탈","holiday inn","호텔"]},
+{name:"Accor",icon:"🏨",url:"https://group.accor.com/en/media/press-releases/",desc:"Accor 보도자료",cat:"hotel",tags:["accor","아코르","노보텔","호텔","프랑스"]},
+{name:"Booking.com",icon:"🏨",url:"https://news.booking.com/",desc:"Booking.com 뉴스",cat:"hotel",tags:["booking","부킹닷컴","여행","숙박"]},
+{name:"Expedia",icon:"🌍",url:"https://newsroom.expedia.com/",desc:"Expedia Newsroom",cat:"hotel",tags:["expedia","익스피디아","여행"]},
+{name:"Airbnb",icon:"🏠",url:"https://news.airbnb.com/",desc:"Airbnb Newsroom",cat:"hotel",tags:["airbnb","에어비앤비","숙박"]},
+{name:"Trip.com",icon:"✈️",url:"https://ir.trip.com/news-releases/",desc:"Trip.com 뉴스",cat:"hotel",tags:["trip.com","씨트립","여행","중국"]},
+{name:"TripAdvisor",icon:"🦉",url:"https://ir.tripadvisor.com/news-releases",desc:"TripAdvisor 뉴스",cat:"hotel",tags:["tripadvisor","트립어드바이저","여행"]},
+{name:"롯데호텔",icon:"🏨",url:"https://www.lottecorp.com/ko/media/news/list.do",desc:"롯데호텔 뉴스",cat:"hotel",tags:["롯데호텔","호텔","한국"]},
+{name:"신라호텔",icon:"🏯",url:"https://www.shillahotels.com/information/news/list.do",desc:"신라호텔 뉴스",cat:"hotel",tags:["신라호텔","호텔","한국"]},
+
+// 📡 통신 / 네트워크
+{name:"SK텔레콤",icon:"📡",url:"https://www.sktelecom.com/index/index.do",desc:"SKT 뉴스룸",cat:"telecom",tags:["skt","sk텔레콤","5g","통신"]},
+{name:"KT",icon:"📞",url:"https://corp.kt.com/html/about/newsroom.html",desc:"KT 뉴스룸",cat:"telecom",tags:["kt","케이티","통신","5g"]},
+{name:"LG유플러스",icon:"🔮",url:"https://www.lguplus.com/press-release/list",desc:"LG U+ 보도자료",cat:"telecom",tags:["lg유플러스","uplus","통신","5g"]},
+{name:"AT&T",icon:"📱",url:"https://about.att.com/news/newsroom",desc:"AT&T Newsroom",cat:"telecom",tags:["att","에이티앤티","통신","미국"]},
+{name:"Verizon",icon:"🔴",url:"https://www.verizon.com/about/news/",desc:"Verizon 뉴스룸",cat:"telecom",tags:["verizon","버라이즌","통신","미국"]},
+{name:"T-Mobile",icon:"🩷",url:"https://newsroom.t-mobile.com/",desc:"T-Mobile Newsroom",cat:"telecom",tags:["t-mobile","티모바일","통신","미국"]},
+{name:"Deutsche Telekom",icon:"🇩🇪",url:"https://www.telekom.com/en/media/media-information",desc:"Deutsche Telekom 뉴스",cat:"telecom",tags:["deutsche telekom","도이치텔레콤","독일","통신"]},
+{name:"Vodafone",icon:"📶",url:"https://www.vodafone.com/news",desc:"Vodafone 뉴스",cat:"telecom",tags:["vodafone","보다폰","통신","영국"]},
+{name:"SoftBank",icon:"🤖",url:"https://www.softbank.jp/en/corp/news/",desc:"SoftBank 뉴스",cat:"telecom",tags:["softbank","소프트뱅크","통신","일본"]},
+{name:"NTT",icon:"📡",url:"https://group.ntt/en/newsrelease/",desc:"NTT 뉴스룸",cat:"telecom",tags:["ntt","일본전신전화","통신","일본"]},
+{name:"China Mobile",icon:"📱",url:"https://www.chinamobileltd.com/en/media/index.php",desc:"China Mobile 뉴스",cat:"telecom",tags:["china mobile","차이나모바일","통신","중국"]},
+{name:"Ericsson",icon:"📡",url:"https://www.ericsson.com/en/press-releases",desc:"Ericsson 보도자료",cat:"telecom",tags:["ericsson","에릭슨","5g","통신장비","스웨덴"]},
+{name:"Nokia",icon:"📵",url:"https://www.nokia.com/about-us/news/releases/",desc:"Nokia 보도자료",cat:"telecom",tags:["nokia","노키아","5g","통신장비","핀란드"]},
+{name:"Huawei",icon:"🌐",url:"https://www.huawei.com/en/news",desc:"Huawei 뉴스룸",cat:"telecom",tags:["huawei","화웨이","통신장비","중국"]},
+{name:"Comcast",icon:"🎭",url:"https://corporate.comcast.com/news-information/news-feed",desc:"Comcast 뉴스룸",cat:"telecom",tags:["comcast","컴캐스트","미디어","통신"]},
+{name:"Charter Communications",icon:"📺",url:"https://corporate.charter.com/news-releases",desc:"Charter Communications 뉴스",cat:"telecom",tags:["charter","통신","케이블","미국"]},
+
+// 🚚 물류 / 해운
+{name:"FedEx",icon:"📫",url:"https://newsroom.fedex.com/newsroom/",desc:"FedEx 뉴스룸",cat:"logistics",tags:["fedex","페덱스","물류","택배"]},
+{name:"UPS",icon:"📦",url:"https://pressroom.ups.com/",desc:"UPS 뉴스룸",cat:"logistics",tags:["ups","유피에스","물류","택배"]},
+{name:"DHL",icon:"🚚",url:"https://www.dhl.com/global-en/home/press.html",desc:"DHL 보도자료",cat:"logistics",tags:["dhl","물류"]},
+{name:"Maersk",icon:"🚢",url:"https://www.maersk.com/news/",desc:"Maersk 뉴스룸",cat:"logistics",tags:["maersk","머스크","해운","물류"]},
+{name:"CJ대한통운",icon:"🚛",url:"https://www.cjlogistics.com/ko/main/newsroom/list",desc:"CJ대한통운 뉴스룸",cat:"logistics",tags:["cj대한통운","물류","택배"]},
+{name:"한진",icon:"✈️",url:"https://www.hanjin.com/kor/cms/contents/newsroom.do",desc:"한진 뉴스룸",cat:"logistics",tags:["한진","물류","택배"]},
+{name:"Kuehne+Nagel",icon:"🌐",url:"https://home.kuehne-nagel.com/en/news-and-media/press-releases",desc:"K+N 보도자료",cat:"logistics",tags:["kuehne nagel","퀴네나겔","물류"]},
+{name:"DB Schenker",icon:"🚂",url:"https://www.dbschenker.com/global/about/press/news/",desc:"DB Schenker 뉴스",cat:"logistics",tags:["db schenker","물류","독일"]},
+{name:"Nippon Yusen (NYK)",icon:"⚓",url:"https://www.nyk.com/english/news/",desc:"NYK 뉴스룸",cat:"logistics",tags:["nyk","일본유센","해운","일본"]},
+{name:"CMA CGM",icon:"🚢",url:"https://www.cma-cgm.com/news/press-releases",desc:"CMA CGM 보도자료",cat:"logistics",tags:["cma cgm","해운","물류","프랑스"]},
+{name:"HMM (현대상선)",icon:"🛳️",url:"https://www.hmm21.com/cms/company/ko/introduce/pr/01/index.jsp",desc:"HMM 보도자료",cat:"logistics",tags:["hmm","현대상선","해운","컨테이너"]},
+{name:"XPO Logistics",icon:"🚛",url:"https://www.xpo.com/en-us/news-releases/",desc:"XPO 뉴스룸",cat:"logistics",tags:["xpo","물류","운송"]},
+{name:"Ryder System",icon:"🚌",url:"https://newsroom.ryder.com/",desc:"Ryder 뉴스룸",cat:"logistics",tags:["ryder","라이더","물류","운송"]},
+
+// 📋 컨설팅 / 회계
+{name:"Accenture",icon:"🔺",url:"https://newsroom.accenture.com/",desc:"Accenture Newsroom",cat:"consulting",tags:["accenture","액센추어","컨설팅","it"]},
+{name:"McKinsey",icon:"📋",url:"https://www.mckinsey.com/about-us/media-inquiries",desc:"McKinsey 뉴스",cat:"consulting",tags:["mckinsey","맥킨지","컨설팅"]},
+{name:"Deloitte",icon:"🏢",url:"https://www2.deloitte.com/us/en/pages/about-deloitte/articles/press-releases.html",desc:"Deloitte 보도자료",cat:"consulting",tags:["deloitte","딜로이트","회계","컨설팅"]},
+{name:"PwC",icon:"🔶",url:"https://www.pwc.com/gx/en/news-room/",desc:"PwC 뉴스룸",cat:"consulting",tags:["pwc","프라이스워터하우스쿠퍼스","컨설팅","회계"]},
+{name:"KPMG",icon:"🔵",url:"https://kpmg.com/xx/en/home/media.html",desc:"KPMG 뉴스룸",cat:"consulting",tags:["kpmg","케이피엠지","회계","컨설팅"]},
+{name:"EY",icon:"🌐",url:"https://www.ey.com/en_gl/newsroom",desc:"EY(Ernst & Young) 뉴스",cat:"consulting",tags:["ey","언스트앤영","회계","컨설팅"]},
+{name:"Bain & Company",icon:"📊",url:"https://www.bain.com/about/media-center/",desc:"Bain 뉴스룸",cat:"consulting",tags:["bain","베인앤컴퍼니","컨설팅"]},
+{name:"BCG",icon:"🔶",url:"https://www.bcg.com/en-us/about/media",desc:"BCG 뉴스룸",cat:"consulting",tags:["bcg","보스턴컨설팅","컨설팅"]},
+{name:"Booz Allen Hamilton",icon:"🛡️",url:"https://www.boozallen.com/media/news.html",desc:"Booz Allen 뉴스룸",cat:"consulting",tags:["booz allen","컨설팅","방산"]},
+{name:"삼성SDS",icon:"💻",url:"https://www.samsungsds.com/kr/news/news.html",desc:"삼성SDS 뉴스룸",cat:"consulting",tags:["삼성sds","it서비스","클라우드"]},
+{name:"NAVER Cloud",icon:"☁️",url:"https://www.ncloud.com/news/press",desc:"네이버클라우드 뉴스",cat:"consulting",tags:["네이버클라우드","클라우드"]},
+{name:"Infosys",icon:"🔷",url:"https://www.infosys.com/newsroom/",desc:"Infosys 뉴스룸",cat:"consulting",tags:["infosys","인포시스","it","인도"]},
+{name:"TCS (Tata Consultancy)",icon:"🔵",url:"https://www.tcs.com/tcs-in-the-news",desc:"TCS 뉴스룸",cat:"consulting",tags:["tcs","타타컨설팅","it","인도"]},
+{name:"Wipro",icon:"🌈",url:"https://www.wipro.com/newsroom/",desc:"Wipro 뉴스룸",cat:"consulting",tags:["wipro","위프로","it","인도"]},
+{name:"Capgemini",icon:"🔷",url:"https://www.capgemini.com/news/",desc:"Capgemini 뉴스",cat:"consulting",tags:["capgemini","캡제미니","it","컨설팅","프랑스"]},
+
+// 🎬 미디어 / OTT
+{name:"Disney",icon:"🏰",url:"https://press.disneyplus.com/",desc:"Disney Press 보도자료",cat:"media",tags:["disney","디즈니","엔터"]},
+{name:"Netflix",icon:"🎬",url:"https://ir.netflix.net/ir/news-events/press-releases/default.aspx",desc:"Netflix 보도자료",cat:"media",tags:["netflix","넷플릭스"]},
+{name:"Warner Bros. Discovery",icon:"🎥",url:"https://www.wbd.com/our-stories/",desc:"WBD 뉴스",cat:"media",tags:["warner","워너브라더스","엔터"]},
+{name:"NBCUniversal",icon:"🦚",url:"https://www.nbcuniversal.com/press-releases",desc:"NBCUniversal 뉴스",cat:"media",tags:["nbcuniversal","nbc","미디어"]},
+{name:"Paramount",icon:"⛰️",url:"https://www.paramount.com/press",desc:"Paramount 뉴스룸",cat:"media",tags:["paramount","파라마운트","엔터"]},
+{name:"Comcast / NBC",icon:"☀️",url:"https://corporate.comcast.com/news-information/news-feed",desc:"Comcast 미디어 뉴스",cat:"media",tags:["comcast","nbc","미디어","케이블"]},
+{name:"CJ ENM",icon:"🎭",url:"https://www.cj.co.kr/kr/media/news",desc:"CJ ENM 뉴스룸",cat:"media",tags:["cj","씨제이","엔터","미디어"]},
+{name:"카카오엔터테인먼트",icon:"🎬",url:"https://kakaoent.com/news/list",desc:"카카오엔터 뉴스",cat:"media",tags:["카카오엔터","엔터","웹툰","웹소설"]},
+{name:"Vivendi",icon:"🎵",url:"https://www.vivendi.com/en/press/",desc:"Vivendi 보도자료",cat:"media",tags:["vivendi","비벤디","음악","미디어","프랑스"]},
+{name:"Lionsgate",icon:"🦁",url:"https://www.lionsgate.com/press-releases",desc:"Lionsgate 뉴스룸",cat:"media",tags:["lionsgate","라이온스게이트","영화","엔터"]},
+
+// 🎮 게임 / 엔터
+{name:"Nexon",icon:"🎮",url:"https://company.nexon.com/news",desc:"넥슨 뉴스룸",cat:"game",tags:["nexon","넥슨","게임"]},
+{name:"Krafton",icon:"🎯",url:"https://www.krafton.com/news/",desc:"크래프톤 뉴스룸",cat:"game",tags:["krafton","크래프톤","배그","게임"]},
+{name:"HYBE",icon:"🎤",url:"https://hybecorp.com/kor/news/press",desc:"HYBE 보도자료",cat:"game",tags:["hybe","하이브","bts","kpop"]},
+{name:"SM엔터테인먼트",icon:"🎶",url:"https://www.smtown.com/news",desc:"SM 공식 뉴스",cat:"game",tags:["sm","에스엠","kpop"]},
+{name:"YG엔터테인먼트",icon:"🎤",url:"https://www.ygfamily.com/board/board.asp?STYPE=news",desc:"YG 뉴스룸",cat:"game",tags:["yg","와이지","kpop","블랙핑크"]},
+{name:"JYP엔터테인먼트",icon:"🎵",url:"https://m.jype.com/news?type=press",desc:"JYP 뉴스룸",cat:"game",tags:["jyp","제이와이피","kpop","트와이스"]},
+{name:"NC소프트",icon:"🗡️",url:"https://ncsoft.com/global/news",desc:"NC소프트 뉴스룸",cat:"game",tags:["ncsoft","엔씨소프트","게임","리니지"]},
+{name:"넷마블",icon:"🕹️",url:"https://company.netmarble.com/news",desc:"넷마블 뉴스룸",cat:"game",tags:["넷마블","netmarble","게임"]},
+{name:"카카오게임즈",icon:"💛",url:"https://www.kakaogames.com/news/press-release",desc:"카카오게임즈 뉴스",cat:"game",tags:["카카오게임즈","게임"]},
+{name:"Electronic Arts (EA)",icon:"🎮",url:"https://ir.ea.com/news-releases/news-release-details/",desc:"EA 보도자료",cat:"game",tags:["ea","일렉트로닉아츠","게임"]},
+{name:"Activision Blizzard",icon:"⚔️",url:"https://investor.activision.com/news-releases/news-release-details/",desc:"Activision 뉴스",cat:"game",tags:["activision","블리자드","게임","콜오브듀티"]},
+{name:"Take-Two Interactive",icon:"🎲",url:"https://ir.take2games.com/news-releases/",desc:"Take-Two 뉴스",cat:"game",tags:["take-two","gta","게임"]},
+{name:"Ubisoft",icon:"🦸",url:"https://www.ubisoft.com/en-us/company/news",desc:"Ubisoft 뉴스룸",cat:"game",tags:["ubisoft","유비소프트","게임","프랑스"]},
+{name:"WME / Endeavor",icon:"⭐",url:"https://www.endeavorco.com/newsroom/",desc:"Endeavor 뉴스룸",cat:"game",tags:["endeavor","wme","엔터","스포츠"]},
+{name:"Live Nation",icon:"🎸",url:"https://investors.livenationentertainment.com/news-releases/news-release-details/",desc:"Live Nation 뉴스",cat:"game",tags:["live nation","공연","엔터"]},
+
+// 🎵 음악 / 공연
+{name:"Spotify",icon:"🎵",url:"https://newsroom.spotify.com/",desc:"Spotify Newsroom",cat:"music",tags:["spotify","스포티파이","음악"]},
+{name:"Universal Music",icon:"🎼",url:"https://www.universalmusic.com/news/",desc:"Universal Music 뉴스룸",cat:"music",tags:["universal music","유니버설뮤직","음악"]},
+{name:"Sony Music",icon:"🎵",url:"https://www.sonymusicglobal.com/news",desc:"Sony Music 뉴스",cat:"music",tags:["sony music","소니뮤직","음악"]},
+{name:"Warner Music",icon:"🎶",url:"https://www.wmg.com/news",desc:"Warner Music 뉴스",cat:"music",tags:["warner music","워너뮤직","음악"]},
+{name:"멜론 (카카오)",icon:"🍈",url:"https://www.melon.com/myinfo/coupon/list.htm",desc:"멜론 뉴스",cat:"music",tags:["melon","멜론","음악","카카오"]},
+{name:"지니뮤직",icon:"🧞",url:"https://pay.genie.co.kr/cancel/myProductCancel",desc:"지니뮤직 뉴스",cat:"music",tags:["genie","지니","음악","kt"]},
+{name:"Apple Music",icon:"🍎",url:"https://www.apple.com/newsroom/",desc:"Apple Music 뉴스",cat:"music",tags:["apple music","애플뮤직","음악"]},
+{name:"Amazon Music",icon:"🎵",url:"https://www.aboutamazon.com/news",desc:"Amazon Music 뉴스",cat:"music",tags:["amazon music","아마존뮤직","음악"]},
+{name:"SiriusXM",icon:"📡",url:"https://ir.siriusxm.com/news-releases/",desc:"SiriusXM 뉴스룸",cat:"music",tags:["siriusxm","시리우스xm","라디오","미국"]},
+
+// 🌿 화학 / 소재
+{name:"BASF",icon:"🧪",url:"https://www.basf.com/global/en/media/news-releases.html",desc:"BASF 보도자료",cat:"chem",tags:["basf","바스프","화학","독일"]},
+{name:"Dow Chemical",icon:"⚗️",url:"https://www.dow.com/en-us/news/news-releases.html",desc:"Dow 뉴스룸",cat:"chem",tags:["dow","다우","화학","소재"]},
+{name:"DuPont",icon:"🔬",url:"https://www.dupont.com/news/press-releases.html",desc:"DuPont 보도자료",cat:"chem",tags:["dupont","듀폰","화학","소재"]},
+{name:"SABIC",icon:"🌿",url:"https://www.sabic.com/en/news/press-releases",desc:"SABIC 보도자료",cat:"chem",tags:["sabic","사빅","화학","사우디"]},
+{name:"Linde",icon:"💨",url:"https://www.linde.com/news-media/press-releases",desc:"Linde 보도자료",cat:"chem",tags:["linde","린데","산업가스","독일"]},
+{name:"Air Products",icon:"🌬️",url:"https://www.airproducts.com/news/media-coverage",desc:"Air Products 뉴스",cat:"chem",tags:["air products","에어프로덕츠","산업가스"]},
+{name:"LG화학",icon:"🧪",url:"https://www.lgchem.com/company/media-relations/news",desc:"LG화학 뉴스룸",cat:"chem",tags:["lg화학","화학","배터리소재"]},
+{name:"롯데케미칼",icon:"⚗️",url:"https://www.lottechem.com/ko/ir/news_board/list.do",desc:"롯데케미칼 뉴스",cat:"chem",tags:["롯데케미칼","화학","소재"]},
+{name:"Covestro",icon:"🔵",url:"https://www.covestro.com/press/press-releases/",desc:"Covestro 보도자료",cat:"chem",tags:["covestro","코베스트로","폴리머","독일"]},
+{name:"Shin-Etsu Chemical",icon:"🧴",url:"https://www.shinetsu.co.jp/en/news/",desc:"신에쓰화학 뉴스",cat:"chem",tags:["shin-etsu","신에쓰","실리콘","일본"]},
+{name:"Toray Industries",icon:"🧵",url:"https://www.toray.com/global/ir/library/news.html",desc:"Toray 뉴스",cat:"chem",tags:["toray","도레이","탄소섬유","일본"]},
+{name:"Evonik",icon:"🏭",url:"https://corporate.evonik.com/en/media/press-releases",desc:"Evonik 보도자료",cat:"chem",tags:["evonik","에보닉","특수화학","독일"]},
+{name:"Arkema",icon:"🌿",url:"https://www.arkema.com/en/media/press-releases/",desc:"Arkema 보도자료",cat:"chem",tags:["arkema","아르케마","특수화학","프랑스"]},
+{name:"PPG Industries",icon:"🎨",url:"https://newsroom.ppg.com/",desc:"PPG 뉴스룸",cat:"chem",tags:["ppg","도료","코팅","소재"]},
+{name:"금호석유화학",icon:"🔴",url:"https://www.kkpc.com/KO/board/view?seq=0&menu_id=press",desc:"금호석유화학 뉴스",cat:"chem",tags:["금호석유","화학","합성고무"]},
+{name:"한화솔루션 케미칼",icon:"⚗️",url:"https://www.hanwhasolutions.com/ko/newsroom/newsroom.do",desc:"한화솔루션 뉴스룸",cat:"chem",tags:["한화솔루션","화학","소재"]},
+
+// 🧵 섬유 / 포장재
+{name:"Amcor",icon:"📦",url:"https://www.amcor.com/media/news",desc:"Amcor 뉴스룸",cat:"material",tags:["amcor","포장재","플라스틱"]},
+{name:"Sealed Air",icon:"🫧",url:"https://ir.sealedair.com/news-releases",desc:"Sealed Air 뉴스",cat:"material",tags:["sealed air","포장재","버블랩"]},
+{name:"International Paper",icon:"📄",url:"https://investor.internationalpaper.com/news-releases",desc:"International Paper 뉴스",cat:"material",tags:["international paper","인터내셔널페이퍼","제지","포장재"]},
+{name:"Smurfit Kappa",icon:"📦",url:"https://www.smurfitkappa.com/newsroom",desc:"Smurfit Kappa 뉴스",cat:"material",tags:["smurfit kappa","골판지","포장재","아일랜드"]},
+{name:"Kuraray",icon:"🧴",url:"https://www.kuraray.com/news/",desc:"Kuraray 뉴스",cat:"material",tags:["kuraray","쿠라레이","합성섬유","일본"]},
+{name:"Teijin",icon:"🧵",url:"https://www.teijin.com/media/news/",desc:"Teijin 뉴스",cat:"material",tags:["teijin","데이진","섬유","소재","일본"]},
+{name:"Invista (Lycra)",icon:"🩱",url:"https://www.invista.com/newsroom/",desc:"Invista 뉴스룸",cat:"material",tags:["invista","lycra","라이크라","섬유"]},
+{name:"Hyosung TNC",icon:"🧶",url:"https://www.hyosung.com/ko/news/",desc:"효성TNC 뉴스룸",cat:"material",tags:["효성tnc","스판덱스","섬유"]},
+{name:"Owens Corning",icon:"🏠",url:"https://investor.owenscorning.com/news-releases",desc:"Owens Corning 뉴스",cat:"material",tags:["owens corning","단열재","소재","건축"]},
+{name:"Corning",icon:"💎",url:"https://www.corning.com/worldwide/en/news-events/news-releases.html",desc:"Corning 뉴스",cat:"material",tags:["corning","코닝","유리","광섬유","디스플레이"]},
+
+// 🌾 농업 / 바이오소재
+{name:"Bayer CropScience",icon:"🌱",url:"https://media.bayer.com/baynews/baynews.nsf/id/Press-Releases",desc:"Bayer CropScience 뉴스",cat:"agri",tags:["bayer cropscience","바이엘","농약","종자"]},
+{name:"Corteva Agriscience",icon:"🌽",url:"https://www.corteva.com/news.html",desc:"Corteva 뉴스룸",cat:"agri",tags:["corteva","코르테바","종자","농업"]},
+{name:"Syngenta",icon:"🌿",url:"https://www.syngenta.com/en/media",desc:"Syngenta 뉴스",cat:"agri",tags:["syngenta","신젠타","농약","종자","스위스"]},
+{name:"BASF Agriculture",icon:"🌾",url:"https://www.basf.com/global/en/media/news-releases.html",desc:"BASF 농업 뉴스",cat:"agri",tags:["basf agriculture","농약","농업"]},
+{name:"Nutrien",icon:"🌱",url:"https://www.nutrien.com/newsroom",desc:"Nutrien 뉴스룸",cat:"agri",tags:["nutrien","뉴트리엔","비료","농업","캐나다"]},
+{name:"Mosaic Company",icon:"⛏️",url:"https://investors.mosaicco.com/news-releases/",desc:"Mosaic 뉴스",cat:"agri",tags:["mosaic","모자이크","비료","인산"]},
+{name:"ADM (Archer-Daniels)",icon:"🌾",url:"https://www.adm.com/en-us/news/news-releases/",desc:"ADM 뉴스룸",cat:"agri",tags:["adm","archer daniels midland","곡물","농업"]},
+{name:"Cargill",icon:"🚜",url:"https://www.cargill.com/news/",desc:"Cargill 뉴스",cat:"agri",tags:["cargill","카길","곡물","농업","식품"]},
+{name:"Deere Agriculture",icon:"🌾",url:"https://www.deere.com/en/news/",desc:"John Deere 농업 뉴스",cat:"agri",tags:["john deere","농기계","스마트팜"]},
+{name:"FMC Corporation",icon:"🌿",url:"https://ir.fmc.com/news-releases/",desc:"FMC 뉴스룸",cat:"agri",tags:["fmc","농약","작물보호"]},
+
+// 🏥 병원 / 의료서비스
+{name:"Mayo Clinic",icon:"🏥",url:"https://newsnetwork.mayoclinic.org/",desc:"Mayo Clinic 뉴스",cat:"hospital",tags:["mayo clinic","메이요클리닉","병원","의료"]},
+{name:"Cleveland Clinic",icon:"❤️",url:"https://newsroom.clevelandclinic.org/",desc:"Cleveland Clinic 뉴스룸",cat:"hospital",tags:["cleveland clinic","클리블랜드클리닉","병원","의료"]},
+{name:"Johns Hopkins",icon:"🎓",url:"https://www.hopkinsmedicine.org/news/newsroom",desc:"Johns Hopkins 뉴스",cat:"hospital",tags:["johns hopkins","존스홉킨스","병원","의료"]},
+{name:"HCA Healthcare",icon:"🏥",url:"https://investor.hcahealthcare.com/news-releases/",desc:"HCA Healthcare 뉴스",cat:"hospital",tags:["hca healthcare","병원","미국"]},
+{name:"UnitedHealth Group",icon:"🌐",url:"https://newsroom.unitedhealthgroup.com/",desc:"UnitedHealth 뉴스룸",cat:"hospital",tags:["unitedhealth","유나이티드헬스","의료보험","헬스케어"]},
+{name:"CVS Health",icon:"💊",url:"https://www.cvshealth.com/news",desc:"CVS Health 뉴스",cat:"hospital",tags:["cvs health","약국","헬스케어"]},
+{name:"서울대학교병원",icon:"🏥",url:"https://www.snuh.org/board/B003/view.do",desc:"서울대병원 뉴스",cat:"hospital",tags:["서울대병원","병원","의료","한국"]},
+{name:"삼성서울병원",icon:"🏥",url:"https://www.samsunghospital.com/home/board/list.do",desc:"삼성서울병원 뉴스",cat:"hospital",tags:["삼성서울병원","병원","의료","한국"]},
+{name:"세브란스병원",icon:"🏥",url:"https://www.yuhs.or.kr/news/press/",desc:"세브란스 뉴스룸",cat:"hospital",tags:["세브란스","연세의료원","병원","의료"]},
+];
+
+function buildGrid(gridId, cat) {
+  const el = document.getElementById(gridId);
+  if (!el) return;
+  DB.filter(d => d.cat === cat).forEach(item => {
+    const a = document.createElement('a');
+    a.className = 'service-card';
+    a.href = item.url;
+    a.target = '_top';
+    a.rel = 'noopener noreferrer';
+    a.innerHTML = `<span class="sc-icon">${item.icon}</span><div><div class="sc-name">${item.name}</div><div class="sc-hint">${item.desc}</div></div>`;
+    el.appendChild(a);
+  });
+}
+
+['bigtech','semi','auto','autoparts','heavy','robot','oil','battery','defense','invest','bank','fintech','pharma','medical','retail','fashion','food','beverage','beauty','construction','airline','hotel','telecom','logistics','consulting','media','game','music','chem','material','agri','hospital'].forEach(c => buildGrid('grid-'+c, c));
+
+function doSearch() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const r = document.getElementById('results');
+  const all = document.getElementById('allServices');
+  r.innerHTML = '';
+  if (!q) { all.style.display = ''; return; }
+  const m = DB.filter(i => i.name.toLowerCase().includes(q) || i.tags.some(t => t.includes(q)));
+  all.style.display = 'none';
+  if (!m.length) {
+    r.innerHTML = `<div class="no-result"><div class="ico">📰</div><p><strong>"${q}"</strong>에 대한 결과를 찾을 수 없어요.</p></div>`;
+    return;
+  }
+  m.forEach((item, i) => {
+    const c = document.createElement('a');
+    c.className = 'result-card';
+    c.href = item.url;
+    c.target = '_top';
+    c.rel = 'noopener noreferrer';
+    c.style.animationDelay = `${i*40}ms`;
+    c.innerHTML = `<div class="result-icon">${item.icon}</div><div class="result-info"><div class="result-name">${item.name}</div><div class="result-url">${item.url}</div><div class="result-desc">${item.desc}</div></div><span class="result-badge">뉴스룸 →</span>`;
+    r.appendChild(c);
+  });
+}
+
+document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key==='Enter') doSearch(); });
+document.getElementById('searchInput').addEventListener('input', () => {
+  const q = document.getElementById('searchInput').value.trim();
+  if (q.length >= 1) doSearch();
+  else { document.getElementById('results').innerHTML = ''; document.getElementById('allServices').style.display = ''; }
+});
+</script>
+</body>
+</html>
