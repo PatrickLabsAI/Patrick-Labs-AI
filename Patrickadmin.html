@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patrick Labs — Database 관리자</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#07090f;--surface:#0d1117;--card:#111827;--border:#1e2736;--accent:#3b82f6;--green:#10b981;--yellow:#f59e0b;--text:#f1f5f9;--muted:#64748b;--radius:12px;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;padding:24px 16px 60px;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 15% 15%,rgba(59,130,246,.05),transparent 50%),radial-gradient(ellipse at 85% 85%,rgba(16,185,129,.04),transparent 50%);pointer-events:none}
+.wrap{max-width:880px;margin:0 auto;position:relative;z-index:1}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* 헤더 */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;animation:fadeUp .4s ease}
+.header-left{display:flex;align-items:center;gap:10px}
+.logo-img{width:36px;height:36px;border-radius:8px;object-fit:cover;box-shadow:0 0 14px rgba(59,130,246,.4);flex-shrink:0}
+.logo-info{display:flex;flex-direction:column;line-height:1}
+.logo-name{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:var(--text)}
+.logo-name span{color:var(--accent)}
+.logo-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:3px}
+.header-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);background:var(--card);border:1px solid var(--border);padding:5px 12px;border-radius:100px}
+
+/* 통계 */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 16px;position:relative;overflow:hidden;animation:fadeUp .4s ease both}
+.stat-card:nth-child(2){animation-delay:.08s}.stat-card:nth-child(3){animation-delay:.16s}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card.blue::before{background:var(--accent)}.stat-card.green::before{background:var(--green)}.stat-card.yellow::before{background:var(--yellow)}
+.stat-label{font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px}
+.stat-value{font-size:28px;font-weight:700;font-family:'IBM Plex Mono',monospace;line-height:1}
+.stat-value.blue{color:var(--accent)}.stat-value.green{color:var(--green)}.stat-value.yellow{color:var(--yellow)}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:5px}
+
+/* 차트 행 */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+@media(max-width:560px){.charts-row{grid-template-columns:1fr}}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;animation:fadeUp .4s ease .2s both}
+.section-title{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px}
+
+/* 파이차트 */
+.pie-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.pie-svg{flex-shrink:0}
+.pie-legend{display:flex;flex-direction:column;gap:6px;flex:1;min-width:100px}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:11px}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.legend-name{color:var(--muted);flex:1}
+.legend-val{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:11px}
+.legend-rev{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#64748b;margin-left:2px}
+
+/* 일별 바차트 */
+.day-bars{display:flex;gap:8px;align-items:flex-end;height:90px}
+.day-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.day-bar-val{font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.day-bar-wrap{flex:1;width:100%;display:flex;align-items:flex-end}
+.day-bar{width:100%;border-radius:4px 4px 0 0}
+.day-bar-label{font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+
+/* 테이블 */
+.table-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;animation:fadeUp .4s ease .3s both}
+.table-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+.table-count{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+.table-count span{color:var(--accent);font-weight:600}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--surface)}
+th{text-align:left;padding:10px 14px;font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid rgba(30,39,54,.5);transition:background .15s}
+tbody tr:hover{background:rgba(59,130,246,.04)}
+tbody tr:last-child{border-bottom:none}
+td{padding:11px 14px;font-size:13px}
+.td-num{font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:11px}
+.td-name{font-weight:700}
+.td-date{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)}
+.td-amount{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--green)}
+.univ-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700;border:1px solid}
+@media(max-width:520px){.stats{grid-template-columns:1fr 1fr}.stats .stat-card:last-child{grid-column:span 2}th:nth-child(4),td:nth-child(4){display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="header-left">
+      <img src="data:image/jpeg;base64,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" class="logo-img" alt="logo">
+      <div class="logo-info">
+        <span class="logo-name">Patrick <span>Labs</span></span>
+        <span class="logo-sub">논문 검색엔진 · Admin</span>
+      </div>
+    </div>
+    <div class="header-badge">Database 구독 관리</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card blue">
+      <div class="stat-label">총 구독자</div>
+      <div class="stat-value blue">101</div>
+      <div class="stat-sub">런칭 4일째 🚀</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">총 수익</div>
+      <div class="stat-value green">₩30,300</div>
+      <div class="stat-sub">구독료 300원/인</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-label">오늘 (3/22)</div>
+      <div class="stat-value yellow">19</div>
+      <div class="stat-sub">신규 구독</div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <!-- 파이차트 -->
+    <div class="chart-card">
+      <div class="section-title">대학별 분포</div>
+      <div class="pie-wrap">
+        <svg class="pie-svg" width="220" height="220" viewBox="0 0 220 220">
+          <path d="M110,110 L110.0,20.0 A90,90 0 1,1 64.6,187.7 Z" fill="#3b82f6" opacity="0.85" stroke="#07090f" stroke-width="2.5"/>
+<path d="M110,110 L64.6,187.7 A90,90 0 0,1 23.9,136.2 Z" fill="#10b981" opacity="0.85" stroke="#07090f" stroke-width="2.5"/>
+<path d="M110,110 L23.9,136.2 A90,90 0 0,1 24.8,81.1 Z" fill="#ef4444" opacity="0.85" stroke="#07090f" stroke-width="2.5"/>
+<path d="M110,110 L24.8,81.1 A90,90 0 0,1 48.9,43.9 Z" fill="#f59e0b" opacity="0.85" stroke="#07090f" stroke-width="2.5"/>
+<path d="M110,110 L48.9,43.9 A90,90 0 0,1 77.2,26.2 Z" fill="#a78bfa" opacity="0.85" stroke="#07090f" stroke-width="2.5"/>
+<path d="M110,110 L77.2,26.2 A90,90 0 0,1 98.8,20.7 Z" fill="#f472b6" opacity="0.85" stroke="#07090f" stroke-width="2.5"/>
+<path d="M110,110 L98.8,20.7 A90,90 0 0,1 110.0,20.0 Z" fill="#2dd4bf" opacity="0.85" stroke="#07090f" stroke-width="2.5"/>
+
+          <circle cx="110" cy="110" r="42" fill="#111827"/>
+          <text x="110" y="106" text-anchor="middle" fill="#f1f5f9" font-size="18" font-weight="700" font-family="IBM Plex Mono">101</text>
+          <text x="110" y="122" text-anchor="middle" fill="#64748b" font-size="10" font-family="IBM Plex Mono">명</text>
+        </svg>
+        <div class="pie-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div><span class="legend-name">한양대</span><span class="legend-val" style="color:#3b82f6">59명</span><span class="legend-rev">₩17,700</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div><span class="legend-name">연세대</span><span class="legend-val" style="color:#10b981">12명</span><span class="legend-rev">₩3,600</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div><span class="legend-name">고려대</span><span class="legend-val" style="color:#ef4444">10명</span><span class="legend-rev">₩3,000</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div><span class="legend-name">서울대</span><span class="legend-val" style="color:#f59e0b">8명</span><span class="legend-rev">₩2,400</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div><span class="legend-name">성균관대</span><span class="legend-val" style="color:#a78bfa">6명</span><span class="legend-rev">₩1,800</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#f472b6"></div><span class="legend-name">국민대</span><span class="legend-val" style="color:#f472b6">4명</span><span class="legend-rev">₩1,200</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#2dd4bf"></div><span class="legend-name">중앙대</span><span class="legend-val" style="color:#2dd4bf">2명</span><span class="legend-rev">₩600</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 일별 바차트 -->
+    <div class="chart-card">
+      <div class="section-title">일별 구독 현황</div>
+      <div class="day-bars">
+        <div class="day-col">
+          <div class="day-bar-val" style="color:#3b82f6">22</div>
+          <div class="day-bar-wrap"><div class="day-bar" style="height:55%;background:rgba(59,130,246,.5)"></div></div>
+          <div class="day-bar-label">3/19</div>
+        </div>
+        <div class="day-col">
+          <div class="day-bar-val" style="color:#3b82f6">28</div>
+          <div class="day-bar-wrap"><div class="day-bar" style="height:70%;background:rgba(59,130,246,.6)"></div></div>
+          <div class="day-bar-label">3/20</div>
+        </div>
+        <div class="day-col">
+          <div class="day-bar-val" style="color:#3b82f6">32</div>
+          <div class="day-bar-wrap"><div class="day-bar" style="height:80%;background:rgba(59,130,246,.75)"></div></div>
+          <div class="day-bar-label">3/21</div>
+        </div>
+        <div class="day-col">
+          <div class="day-bar-val" style="color:#10b981">19</div>
+          <div class="day-bar-wrap"><div class="day-bar" style="height:47%;background:rgba(16,185,129,.7)"></div></div>
+          <div class="day-bar-label">3/22 ●</div>
+        </div>
+      </div>
+      <!-- 대학별 가로 바 -->
+      <div style="margin-top:20px;display:flex;flex-direction:column;gap:6px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.5px;margin-bottom:4px">TOP 대학</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;color:var(--muted);width:50px;flex-shrink:0">한양대</span>
+          <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:58%;height:100%;background:#3b82f6;border-radius:3px"></div></div>
+          <span style="font-size:11px;font-family:'IBM Plex Mono';color:#3b82f6;width:24px;text-align:right">59</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;color:var(--muted);width:50px;flex-shrink:0">연세대</span>
+          <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:12%;height:100%;background:#10b981;border-radius:3px"></div></div>
+          <span style="font-size:11px;font-family:'IBM Plex Mono';color:#10b981;width:24px;text-align:right">12</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;color:var(--muted);width:50px;flex-shrink:0">고려대</span>
+          <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:10%;height:100%;background:#ef4444;border-radius:3px"></div></div>
+          <span style="font-size:11px;font-family:'IBM Plex Mono';color:#ef4444;width:24px;text-align:right">10</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;color:var(--muted);width:50px;flex-shrink:0">서울대</span>
+          <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:8%;height:100%;background:#f59e0b;border-radius:3px"></div></div>
+          <span style="font-size:11px;font-family:'IBM Plex Mono';color:#f59e0b;width:24px;text-align:right">8</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 구독자 테이블 -->
+  <div class="table-section">
+    <div class="table-header">
+      <div class="section-title" style="margin:0">구독자 목록</div>
+      <div class="table-count"><span>101</span>명 · ₩300/인</div>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>이름</th><th>대학교</th><th>구독일</th><th>금액</th></tr></thead>
+      <tbody>
+      <tr style="animation:fadeUp .3s ease 0.00s both">
+        <td class="td-num">1</td>
+        <td class="td-name">김민준</td>
+        <td><span class="univ-badge" style="color:#a78bfa;background:rgba(167,139,250,.15);border-color:rgba(167,139,250,.3)">성균관대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.01s both">
+        <td class="td-num">2</td>
+        <td class="td-name">이서연</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.02s both">
+        <td class="td-num">3</td>
+        <td class="td-name">박지호</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.03s both">
+        <td class="td-num">4</td>
+        <td class="td-name">최수아</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.04s both">
+        <td class="td-num">5</td>
+        <td class="td-name">정예준</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.05s both">
+        <td class="td-num">6</td>
+        <td class="td-name">강민서</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.06s both">
+        <td class="td-num">7</td>
+        <td class="td-name">조현우</td>
+        <td><span class="univ-badge" style="color:#f59e0b;background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3)">서울대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.07s both">
+        <td class="td-num">8</td>
+        <td class="td-name">윤지아</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.08s both">
+        <td class="td-num">9</td>
+        <td class="td-name">임도윤</td>
+        <td><span class="univ-badge" style="color:#f59e0b;background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3)">서울대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.09s both">
+        <td class="td-num">10</td>
+        <td class="td-name">한채원</td>
+        <td><span class="univ-badge" style="color:#10b981;background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3)">연세대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.10s both">
+        <td class="td-num">11</td>
+        <td class="td-name">오시우</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.11s both">
+        <td class="td-num">12</td>
+        <td class="td-name">신나은</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.12s both">
+        <td class="td-num">13</td>
+        <td class="td-name">권준서</td>
+        <td><span class="univ-badge" style="color:#ef4444;background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3)">고려대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.13s both">
+        <td class="td-num">14</td>
+        <td class="td-name">황지윤</td>
+        <td><span class="univ-badge" style="color:#10b981;background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3)">연세대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.14s both">
+        <td class="td-num">15</td>
+        <td class="td-name">장민혁</td>
+        <td><span class="univ-badge" style="color:#a78bfa;background:rgba(167,139,250,.15);border-color:rgba(167,139,250,.3)">성균관대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.15s both">
+        <td class="td-num">16</td>
+        <td class="td-name">배도현</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.16s both">
+        <td class="td-num">17</td>
+        <td class="td-name">노지은</td>
+        <td><span class="univ-badge" style="color:#ef4444;background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3)">고려대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.17s both">
+        <td class="td-num">18</td>
+        <td class="td-name">조서아</td>
+        <td><span class="univ-badge" style="color:#2dd4bf;background:rgba(45,212,191,.15);border-color:rgba(45,212,191,.3)">중앙대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.18s both">
+        <td class="td-num">19</td>
+        <td class="td-name">이준혁</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.19s both">
+        <td class="td-num">20</td>
+        <td class="td-name">박하은</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.20s both">
+        <td class="td-num">21</td>
+        <td class="td-name">김서진</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.21s both">
+        <td class="td-num">22</td>
+        <td class="td-name">최지호</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/19</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.22s both">
+        <td class="td-num">23</td>
+        <td class="td-name">정민아</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.23s both">
+        <td class="td-num">24</td>
+        <td class="td-name">강준영</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.24s both">
+        <td class="td-num">25</td>
+        <td class="td-name">조지우</td>
+        <td><span class="univ-badge" style="color:#f59e0b;background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3)">서울대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.25s both">
+        <td class="td-num">26</td>
+        <td class="td-name">윤서연</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.26s both">
+        <td class="td-num">27</td>
+        <td class="td-name">임은서</td>
+        <td><span class="univ-badge" style="color:#f59e0b;background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3)">서울대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.27s both">
+        <td class="td-num">28</td>
+        <td class="td-name">한민준</td>
+        <td><span class="univ-badge" style="color:#10b981;background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3)">연세대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.28s both">
+        <td class="td-num">29</td>
+        <td class="td-name">오예은</td>
+        <td><span class="univ-badge" style="color:#ef4444;background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3)">고려대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.29s both">
+        <td class="td-num">30</td>
+        <td class="td-name">신준혁</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.30s both">
+        <td class="td-num">31</td>
+        <td class="td-name">권아름</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.31s both">
+        <td class="td-num">32</td>
+        <td class="td-name">황도윤</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.32s both">
+        <td class="td-num">33</td>
+        <td class="td-name">안채영</td>
+        <td><span class="univ-badge" style="color:#10b981;background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3)">연세대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.33s both">
+        <td class="td-num">34</td>
+        <td class="td-name">홍민서</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.34s both">
+        <td class="td-num">35</td>
+        <td class="td-name">문서준</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.35s both">
+        <td class="td-num">36</td>
+        <td class="td-name">양지훈</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.36s both">
+        <td class="td-num">37</td>
+        <td class="td-name">배예원</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.37s both">
+        <td class="td-num">38</td>
+        <td class="td-name">노준서</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.38s both">
+        <td class="td-num">39</td>
+        <td class="td-name">장수아</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.39s both">
+        <td class="td-num">40</td>
+        <td class="td-name">이민호</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.40s both">
+        <td class="td-num">41</td>
+        <td class="td-name">박서윤</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.41s both">
+        <td class="td-num">42</td>
+        <td class="td-name">김준서</td>
+        <td><span class="univ-badge" style="color:#a78bfa;background:rgba(167,139,250,.15);border-color:rgba(167,139,250,.3)">성균관대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.42s both">
+        <td class="td-num">43</td>
+        <td class="td-name">최예린</td>
+        <td><span class="univ-badge" style="color:#f59e0b;background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3)">서울대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.43s both">
+        <td class="td-num">44</td>
+        <td class="td-name">정도윤</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.44s both">
+        <td class="td-num">45</td>
+        <td class="td-name">강서아</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.45s both">
+        <td class="td-num">46</td>
+        <td class="td-name">조민준</td>
+        <td><span class="univ-badge" style="color:#10b981;background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3)">연세대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.46s both">
+        <td class="td-num">47</td>
+        <td class="td-name">윤채원</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.47s both">
+        <td class="td-num">48</td>
+        <td class="td-name">임시우</td>
+        <td><span class="univ-badge" style="color:#ef4444;background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3)">고려대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.48s both">
+        <td class="td-num">49</td>
+        <td class="td-name">한지후</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.49s both">
+        <td class="td-num">50</td>
+        <td class="td-name">오민서</td>
+        <td><span class="univ-badge" style="color:#ef4444;background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3)">고려대</span></td>
+        <td class="td-date">2026. 3/20</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.50s both">
+        <td class="td-num">51</td>
+        <td class="td-name">신하은</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.51s both">
+        <td class="td-num">52</td>
+        <td class="td-name">권준혁</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.52s both">
+        <td class="td-num">53</td>
+        <td class="td-name">황서연</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.53s both">
+        <td class="td-num">54</td>
+        <td class="td-name">안도현</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.54s both">
+        <td class="td-num">55</td>
+        <td class="td-name">홍예은</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.55s both">
+        <td class="td-num">56</td>
+        <td class="td-name">문준혁</td>
+        <td><span class="univ-badge" style="color:#f472b6;background:rgba(244,114,182,.15);border-color:rgba(244,114,182,.3)">국민대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.56s both">
+        <td class="td-num">57</td>
+        <td class="td-name">양민아</td>
+        <td><span class="univ-badge" style="color:#10b981;background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3)">연세대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.57s both">
+        <td class="td-num">58</td>
+        <td class="td-name">배서준</td>
+        <td><span class="univ-badge" style="color:#10b981;background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3)">연세대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.58s both">
+        <td class="td-num">59</td>
+        <td class="td-name">노예원</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.59s both">
+        <td class="td-num">60</td>
+        <td class="td-name">장준서</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.60s both">
+        <td class="td-num">61</td>
+        <td class="td-name">이채원</td>
+        <td><span class="univ-badge" style="color:#f472b6;background:rgba(244,114,182,.15);border-color:rgba(244,114,182,.3)">국민대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.61s both">
+        <td class="td-num">62</td>
+        <td class="td-name">박민준</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.62s both">
+        <td class="td-num">63</td>
+        <td class="td-name">김서아</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.63s both">
+        <td class="td-num">64</td>
+        <td class="td-name">최도현</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.64s both">
+        <td class="td-num">65</td>
+        <td class="td-name">정시우</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.65s both">
+        <td class="td-num">66</td>
+        <td class="td-name">강지후</td>
+        <td><span class="univ-badge" style="color:#2dd4bf;background:rgba(45,212,191,.15);border-color:rgba(45,212,191,.3)">중앙대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.66s both">
+        <td class="td-num">67</td>
+        <td class="td-name">조예은</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.67s both">
+        <td class="td-num">68</td>
+        <td class="td-name">윤하은</td>
+        <td><span class="univ-badge" style="color:#10b981;background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3)">연세대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.68s both">
+        <td class="td-num">69</td>
+        <td class="td-name">임민서</td>
+        <td><span class="univ-badge" style="color:#f59e0b;background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3)">서울대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.69s both">
+        <td class="td-num">70</td>
+        <td class="td-name">한서연</td>
+        <td><span class="univ-badge" style="color:#a78bfa;background:rgba(167,139,250,.15);border-color:rgba(167,139,250,.3)">성균관대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.70s both">
+        <td class="td-num">71</td>
+        <td class="td-name">오준혁</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.71s both">
+        <td class="td-num">72</td>
+        <td class="td-name">신도현</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.72s both">
+        <td class="td-num">73</td>
+        <td class="td-name">권예린</td>
+        <td><span class="univ-badge" style="color:#ef4444;background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3)">고려대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.73s both">
+        <td class="td-num">74</td>
+        <td class="td-name">황민준</td>
+        <td><span class="univ-badge" style="color:#f472b6;background:rgba(244,114,182,.15);border-color:rgba(244,114,182,.3)">국민대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.74s both">
+        <td class="td-num">75</td>
+        <td class="td-name">안서아</td>
+        <td><span class="univ-badge" style="color:#10b981;background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3)">연세대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.75s both">
+        <td class="td-num">76</td>
+        <td class="td-name">홍채원</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.76s both">
+        <td class="td-num">77</td>
+        <td class="td-name">문지훈</td>
+        <td><span class="univ-badge" style="color:#f59e0b;background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3)">서울대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.77s both">
+        <td class="td-num">78</td>
+        <td class="td-name">양예원</td>
+        <td><span class="univ-badge" style="color:#a78bfa;background:rgba(167,139,250,.15);border-color:rgba(167,139,250,.3)">성균관대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.78s both">
+        <td class="td-num">79</td>
+        <td class="td-name">배준혁</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.79s both">
+        <td class="td-num">80</td>
+        <td class="td-name">노서연</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.80s both">
+        <td class="td-num">81</td>
+        <td class="td-name">김도현</td>
+        <td><span class="univ-badge" style="color:#ef4444;background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3)">고려대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.81s both">
+        <td class="td-num">82</td>
+        <td class="td-name">이예원</td>
+        <td><span class="univ-badge" style="color:#ef4444;background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3)">고려대</span></td>
+        <td class="td-date">2026. 3/21</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.82s both">
+        <td class="td-num">83</td>
+        <td class="td-name">박준서</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.83s both">
+        <td class="td-num">84</td>
+        <td class="td-name">최민아</td>
+        <td><span class="univ-badge" style="color:#f472b6;background:rgba(244,114,182,.15);border-color:rgba(244,114,182,.3)">국민대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.84s both">
+        <td class="td-num">85</td>
+        <td class="td-name">정하은</td>
+        <td><span class="univ-badge" style="color:#10b981;background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3)">연세대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.85s both">
+        <td class="td-num">86</td>
+        <td class="td-name">강예준</td>
+        <td><span class="univ-badge" style="color:#ef4444;background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3)">고려대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.86s both">
+        <td class="td-num">87</td>
+        <td class="td-name">조서준</td>
+        <td><span class="univ-badge" style="color:#a78bfa;background:rgba(167,139,250,.15);border-color:rgba(167,139,250,.3)">성균관대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.87s both">
+        <td class="td-num">88</td>
+        <td class="td-name">윤민혁</td>
+        <td><span class="univ-badge" style="color:#10b981;background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3)">연세대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.88s both">
+        <td class="td-num">89</td>
+        <td class="td-name">임채원</td>
+        <td><span class="univ-badge" style="color:#f59e0b;background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3)">서울대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.89s both">
+        <td class="td-num">90</td>
+        <td class="td-name">한도윤</td>
+        <td><span class="univ-badge" style="color:#10b981;background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3)">연세대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.90s both">
+        <td class="td-num">91</td>
+        <td class="td-name">오서연</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.91s both">
+        <td class="td-num">92</td>
+        <td class="td-name">신예은</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.92s both">
+        <td class="td-num">93</td>
+        <td class="td-name">권민준</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.93s both">
+        <td class="td-num">94</td>
+        <td class="td-name">황채원</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.94s both">
+        <td class="td-num">95</td>
+        <td class="td-name">안지훈</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.95s both">
+        <td class="td-num">96</td>
+        <td class="td-name">홍서아</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.96s both">
+        <td class="td-num">97</td>
+        <td class="td-name">문예원</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.97s both">
+        <td class="td-num">98</td>
+        <td class="td-name">양도현</td>
+        <td><span class="univ-badge" style="color:#ef4444;background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3)">고려대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.98s both">
+        <td class="td-num">99</td>
+        <td class="td-name">배서연</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 0.99s both">
+        <td class="td-num">100</td>
+        <td class="td-name">노준혁</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      <tr style="animation:fadeUp .3s ease 1.00s both">
+        <td class="td-num">101</td>
+        <td class="td-name">장예준</td>
+        <td><span class="univ-badge" style="color:#3b82f6;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3)">한양대</span></td>
+        <td class="td-date">2026. 3/22</td>
+        <td class="td-amount">₩300</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+</body>
+</html>
