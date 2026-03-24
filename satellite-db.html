@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이든이연구소 — Satellite Database</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#04060f;--card:#090f1e;--border:#131e30;
+  --accent:#3b82f6;--accent2:#60a5fa;--green:#22d3ee;
+  --purple:#a78bfa;--orange:#f97316;
+  --text:#e8edf5;--muted:#3d4f66;--radius:16px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;
+  background-image:
+    radial-gradient(1px 1px at 8% 15%,rgba(255,255,255,.85) 0%,transparent 100%),
+    radial-gradient(1px 1px at 88% 10%,rgba(255,255,255,.65) 0%,transparent 100%),
+    radial-gradient(1px 1px at 40% 65%,rgba(255,255,255,.75) 0%,transparent 100%),
+    radial-gradient(1px 1px at 65% 85%,rgba(255,255,255,.55) 0%,transparent 100%),
+    radial-gradient(1px 1px at 20% 72%,rgba(255,255,255,.7) 0%,transparent 100%),
+    radial-gradient(1px 1px at 95% 44%,rgba(255,255,255,.85) 0%,transparent 100%),
+    radial-gradient(1.5px 1.5px at 57% 7%,rgba(120,180,255,.65) 0%,transparent 100%),
+    radial-gradient(1px 1px at 14% 36%,rgba(255,255,255,.6) 0%,transparent 100%);
+  pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse at 50% -10%,rgba(59,130,246,.1) 0%,transparent 55%);
+  pointer-events:none;z-index:0}
+
+nav{position:relative;z-index:10;max-width:1000px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:18px 24px 0}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo img{width:34px;height:34px;border-radius:8px;object-fit:cover;box-shadow:0 0 16px rgba(59,130,246,.5)}
+.logo-name{font-size:15px;font-weight:800;color:var(--text);letter-spacing:-.4px}
+.logo-name span{color:var(--accent)}
+.logo-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
+.live-pill{display:flex;align-items:center;gap:6px;background:rgba(34,211,238,.07);border:1px solid rgba(34,211,238,.18);border-radius:100px;padding:5px 12px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--green)}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.5)}}
+
+.hero{position:relative;z-index:10;max-width:1000px;margin:0 auto;padding:28px 24px 20px;text-align:center}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:7px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.18);border-radius:100px;padding:5px 14px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--accent2);margin-bottom:12px;letter-spacing:.4px}
+h1{font-size:clamp(22px,4vw,38px);font-weight:800;letter-spacing:-1.5px;line-height:1.15;margin-bottom:8px}
+h1 em{font-style:normal;color:var(--accent)}
+.stats{display:flex;gap:8px;justify-content:center;margin-bottom:20px}
+.stat{background:rgba(9,15,30,.8);border:1px solid var(--border);border-radius:100px;padding:6px 14px;display:flex;align-items:center;gap:7px}
+.stat-val{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600}
+.stat-lbl{font-size:11px;color:var(--muted)}
+
+.wrap{max-width:1000px;margin:0 auto;padding:0 24px 32px;position:relative;z-index:10}
+
+/* 2x2 그리드 */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+
+/* 카드 */
+.pcard{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:all .22s;animation:up .5s ease both;text-decoration:none;color:var(--text)}
+.pcard:hover{transform:translateY(-4px)}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.pc-blue{border-color:rgba(59,130,246,.2)}.pc-blue:hover{border-color:rgba(59,130,246,.55);box-shadow:0 12px 40px rgba(59,130,246,.12)}
+.pc-green{border-color:rgba(34,211,238,.15)}.pc-green:hover{border-color:rgba(34,211,238,.45);box-shadow:0 12px 40px rgba(34,211,238,.08)}
+.pc-purple{border-color:rgba(167,139,250,.18)}.pc-purple:hover{border-color:rgba(167,139,250,.5);box-shadow:0 12px 40px rgba(167,139,250,.08)}
+.pc-orange{border-color:rgba(249,115,22,.18)}.pc-orange:hover{border-color:rgba(249,115,22,.48);box-shadow:0 12px 40px rgba(249,115,22,.08)}
+
+/* 상단 컬러바 */
+.card-bar{height:2px}
+.pc-blue .card-bar{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.pc-green .card-bar{background:linear-gradient(90deg,var(--green),#67e8f9)}
+.pc-purple .card-bar{background:linear-gradient(90deg,var(--purple),#c4b5fd)}
+.pc-orange .card-bar{background:linear-gradient(90deg,var(--orange),#fb923c)}
+
+/* 프리뷰 영역 — 우주 테마 시각화 */
+.preview{width:100%;height:200px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+
+/* NASA Eyes 프리뷰 */
+.prev-nasa-eyes{background:radial-gradient(ellipse at 50% 50%,#0a1628 0%,#04060f 100%)}
+.prev-nasa-eyes::before{content:'';position:absolute;inset:0;
+  background-image:
+    radial-gradient(1px 1px at 10% 20%,rgba(255,255,255,.9) 0%,transparent 100%),
+    radial-gradient(1px 1px at 80% 15%,rgba(255,255,255,.7) 0%,transparent 100%),
+    radial-gradient(1px 1px at 45% 70%,rgba(255,255,255,.8) 0%,transparent 100%),
+    radial-gradient(1px 1px at 90% 60%,rgba(255,255,255,.6) 0%,transparent 100%),
+    radial-gradient(1px 1px at 25% 85%,rgba(255,255,255,.7) 0%,transparent 100%),
+    radial-gradient(1px 1px at 60% 10%,rgba(255,255,255,.5) 0%,transparent 100%),
+    radial-gradient(1px 1px at 15% 50%,rgba(255,255,255,.6) 0%,transparent 100%),
+    radial-gradient(1px 1px at 70% 80%,rgba(255,255,255,.8) 0%,transparent 100%),
+    radial-gradient(1px 1px at 35% 35%,rgba(255,255,255,.5) 0%,transparent 100%),
+    radial-gradient(2px 2px at 55% 45%,rgba(150,200,255,.6) 0%,transparent 100%);
+  pointer-events:none}
+.asteroid-belt{position:absolute;width:160px;height:160px;border:1px dashed rgba(255,255,255,.12);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);animation:orbit 20s linear infinite}
+.asteroid-belt-2{width:110px;height:110px;border:1px dashed rgba(255,255,255,.08);animation-duration:14s;animation-direction:reverse}
+.sun{position:absolute;width:32px;height:32px;background:radial-gradient(circle,#fff7a0,#ffb800 60%,transparent 100%);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 0 20px rgba(255,184,0,.6),0 0 40px rgba(255,184,0,.3)}
+.asteroid{position:absolute;width:4px;height:4px;background:rgba(200,180,150,.8);border-radius:50%;top:50%;left:50%}
+.a1{transform:rotate(0deg) translateX(80px);box-shadow:0 0 4px rgba(200,180,150,.5)}
+.a2{transform:rotate(60deg) translateX(80px);width:3px;height:3px}
+.a3{transform:rotate(130deg) translateX(80px);width:5px;height:5px;background:rgba(180,160,130,.7)}
+.a4{transform:rotate(200deg) translateX(80px)}
+.a5{transform:rotate(270deg) translateX(80px);width:3px;height:3px}
+.a6{transform:rotate(320deg) translateX(55px);width:3px;height:3px;background:rgba(180,160,130,.6)}
+@keyframes orbit{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.prev-label{position:absolute;bottom:12px;left:14px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:rgba(255,255,255,.4);letter-spacing:.5px}
+.prev-badge{position:absolute;top:10px;right:10px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;padding:3px 8px;border-radius:5px;letter-spacing:.8px}
+.pc-blue .prev-badge{background:rgba(59,130,246,.18);color:var(--accent2);border:1px solid rgba(59,130,246,.3)}
+.pc-green .prev-badge{background:rgba(34,211,238,.12);color:var(--green);border:1px solid rgba(34,211,238,.25)}
+.pc-purple .prev-badge{background:rgba(167,139,250,.15);color:var(--purple);border:1px solid rgba(167,139,250,.28)}
+.pc-orange .prev-badge{background:rgba(249,115,22,.12);color:var(--orange);border:1px solid rgba(249,115,22,.25)}
+
+/* Earth NullSchool 프리뷰 */
+.prev-earth{background:radial-gradient(ellipse at 30% 30%,#030d20 0%,#020608 100%);overflow:hidden}
+/* 회전하는 지구 */
+.earth-globe{position:absolute;width:120px;height:120px;border-radius:50%;background:
+  radial-gradient(circle at 30% 30%,rgba(255,255,255,.08),transparent 40%),
+  radial-gradient(circle at 35% 35%,#1a7a40,#0e5568 35%,#0a3d7a 65%,#05152e 100%);
+  box-shadow:0 0 0 1px rgba(34,211,238,.2),0 0 40px rgba(34,211,238,.15),0 0 80px rgba(34,211,238,.05);
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  animation:earthspin 12s linear infinite}
+@keyframes earthspin{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(30deg)}}
+.cyclone{position:absolute;border-radius:50%;border:1.5px solid rgba(34,211,238,.35);animation:cycloneSpin linear infinite}
+.cy1{width:60px;height:60px;top:20%;left:10%;animation-duration:6s;box-shadow:0 0 8px rgba(34,211,238,.15)}
+.cy1-inner{width:34px;height:34px;top:calc(20% + 13px);left:calc(10% + 13px);border-color:rgba(34,211,238,.25);animation-duration:4s;animation-direction:reverse}
+.cy1-core{width:10px;height:10px;top:calc(20% + 25px);left:calc(10% + 25px);border-color:rgba(34,211,238,.5);animation-duration:2s;background:rgba(34,211,238,.1)}
+.cy2{width:42px;height:42px;top:52%;left:62%;border-color:rgba(100,200,255,.3);animation-duration:7s}
+.cy2-inner{width:22px;height:22px;top:calc(52% + 10px);left:calc(62% + 10px);border-color:rgba(100,200,255,.2);animation-duration:4.5s;animation-direction:reverse}
+.jetstream{position:absolute;width:200%;height:2px;background:linear-gradient(90deg,transparent,rgba(34,211,238,.45),rgba(100,200,255,.6),rgba(34,211,238,.45),transparent);border-radius:2px}
+.js1{top:32%;left:-100%;animation:jetsweep 4s ease-in-out infinite}
+.js2{top:56%;left:-100%;animation:jetsweep 5s ease-in-out infinite 1.5s;opacity:.6}
+@keyframes jetsweep{0%{left:-100%;opacity:0}20%{opacity:1}80%{opacity:1}100%{left:100%;opacity:0}}
+@keyframes cycloneSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* NASA Worldview 프리뷰 */
+.prev-worldview{background:#04060f}
+.world-map{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.continent{position:absolute;border-radius:3px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.2)}
+.c1{width:45px;height:30px;top:35%;left:15%}
+.c2{width:55px;height:45px;top:25%;left:35%;background:rgba(59,130,246,.12)}
+.c3{width:35px;height:50px;top:30%;left:55%}
+.c4{width:40px;height:30px;top:55%;left:30%;background:rgba(59,130,246,.1)}
+.c5{width:25px;height:40px;top:40%;left:72%}
+.scan-line{position:absolute;width:100%;height:2px;background:linear-gradient(90deg,transparent,rgba(167,139,250,.6),transparent);animation:scan 3s ease-in-out infinite;top:0}
+@keyframes scan{0%{top:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{top:100%;opacity:0}}
+.fire-dot{position:absolute;width:5px;height:5px;background:#f97316;border-radius:50%;box-shadow:0 0 6px rgba(249,115,22,.8);animation:firepulse 1.5s ease-in-out infinite}
+.fd1{top:38%;left:28%}
+.fd2{top:45%;left:60%;animation-delay:.5s}
+.fd3{top:32%;left:48%;animation-delay:1s}
+@keyframes firepulse{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.6);opacity:1}}
+
+/* Solar System 프리뷰 */
+.prev-solar{background:radial-gradient(ellipse at 50% 50%,#080d1a 0%,#04060f 100%)}
+.solar-sun{position:absolute;width:28px;height:28px;background:radial-gradient(circle,#fff7a0,#ff9500 60%,transparent 100%);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 0 20px rgba(255,149,0,.7),0 0 50px rgba(255,149,0,.3),0 0 80px rgba(255,149,0,.1)}
+.orbit-ring{position:absolute;border:1px solid rgba(255,255,255,.06);border-radius:50%;top:50%;left:50%}
+.or1{width:50px;height:50px;margin-left:-25px;margin-top:-25px}
+.or2{width:80px;height:80px;margin-left:-40px;margin-top:-40px}
+.or3{width:116px;height:116px;margin-left:-58px;margin-top:-58px}
+.or4{width:155px;height:155px;margin-left:-77.5px;margin-top:-77.5px}
+.planet{position:absolute;border-radius:50%;top:50%;left:50%}
+.p1{width:5px;height:5px;background:#a0a0c0;margin-left:-2.5px;margin-top:-27px;animation:planetorbit 4s linear infinite}
+.p2{width:7px;height:7px;background:#e8c88a;margin-left:-3.5px;margin-top:-43px;animation:planetorbit 7s linear infinite}
+.p3{width:8px;height:8px;background:#4a9eff;margin-left:-4px;margin-top:-62px;animation:planetorbit 11s linear infinite}
+.p4{width:6px;height:6px;background:#e0704a;margin-left:-3px;margin-top:-82px;animation:planetorbit 18s linear infinite}
+@keyframes planetorbit{from{transform:rotate(0deg) translateY(-100%) rotate(0deg) translate(0,0)}to{transform:rotate(360deg) translateY(-100%) rotate(-360deg) translate(0,0)}}
+
+/* 카드 하단 정보 */
+.pcard-info{padding:13px 16px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);gap:10px}
+.pcard-left{display:flex;align-items:center;gap:9px;min-width:0}
+.pcard-ico{font-size:17px;flex-shrink:0}
+.pcard-org{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:1px}
+.pcard-title{font-size:12px;font-weight:700;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.open-btn{flex-shrink:0;display:inline-flex;align-items:center;gap:4px;border:1.5px solid;border-radius:8px;padding:5px 11px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;transition:all .18s}
+.pc-blue .open-btn{border-color:rgba(59,130,246,.3);color:var(--accent2)}.pc-blue .open-btn:hover{background:rgba(59,130,246,.1)}
+.pc-green .open-btn{border-color:rgba(34,211,238,.25);color:var(--green)}.pc-green .open-btn:hover{background:rgba(34,211,238,.07)}
+.pc-purple .open-btn{border-color:rgba(167,139,250,.28);color:var(--purple)}.pc-purple .open-btn:hover{background:rgba(167,139,250,.07)}
+.pc-orange .open-btn{border-color:rgba(249,115,22,.28);color:var(--orange)}.pc-orange .open-btn:hover{background:rgba(249,115,22,.07)}
+
+footer{position:relative;z-index:10;max-width:1000px;margin:0 auto;padding:16px 24px 32px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.foot-logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+.foot-logo img{width:24px;height:24px;border-radius:6px;object-fit:cover}
+.foot-name{font-size:13px;font-weight:800;color:var(--text)}
+.foot-name span{color:var(--accent)}
+.foot-copy{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="logo">
+    <img src="data:image/jpeg;base64,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" alt="이든이연구소">
+    <div>
+      <div class="logo-name">이든이<span>연구소</span></div>
+      <div class="logo-sub">Satellite Database</div>
+    </div>
+  </a>
+  <div class="live-pill"><div class="live-dot"></div>LIVE DATA</div>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow">🛰️ Real-Time Satellite Data Hub</div>
+  <h1>Explore the Universe in <em>Real Time</em></h1>
+  <div class="stats">
+    <div class="stat"><span class="stat-val" style="color:var(--accent2)">8,377+</span><span class="stat-lbl">Active Satellites</span></div>
+    <div class="stat"><span class="stat-val" style="color:var(--green)">Real-Time</span><span class="stat-lbl">Earth Observation</span></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="grid">
+
+    <!-- NASA Eyes -->
+    <a class="pcard pc-blue" href="https://eyes.nasa.gov/apps/asteroids/#/home" target="_blank" rel="noopener" style="animation-delay:.04s">
+      <div class="card-bar"></div>
+      <div class="preview prev-nasa-eyes">
+        <div class="asteroid-belt">
+          <div class="asteroid a1"></div><div class="asteroid a2"></div><div class="asteroid a3"></div>
+          <div class="asteroid a4"></div><div class="asteroid a5"></div>
+        </div>
+        <div class="asteroid-belt asteroid-belt-2">
+          <div class="asteroid a6"></div>
+        </div>
+        <div class="sun"></div>
+        <div class="prev-badge">NASA · LIVE 3D</div>
+        <div class="prev-label">Near-Earth Asteroid Tracker</div>
+      </div>
+      <div class="pcard-info">
+        <div class="pcard-left">
+          <span class="pcard-ico">☄️</span>
+          <div><div class="pcard-org">NASA JPL</div><div class="pcard-title">NASA Eyes on the Solar System</div></div>
+        </div>
+        <span class="open-btn">Open ↗</span>
+      </div>
+    </a>
+
+    <!-- Earth NullSchool -->
+    <a class="pcard pc-green" href="https://earth.nullschool.net/#current/wind/surface/level/orthographic=-250.54,45.83,159" target="_blank" rel="noopener" style="animation-delay:.08s">
+      <div class="card-bar"></div>
+      <div class="preview prev-earth">
+        <div class="earth-globe"></div>
+        <div class="cyclone cy1"></div>
+        <div class="cyclone cy1-inner"></div>
+        <div class="cyclone cy1-core"></div>
+        <div class="cyclone cy2"></div>
+        <div class="cyclone cy2-inner"></div>
+        <div class="jetstream js1"></div>
+        <div class="jetstream js2"></div>
+        <div class="prev-badge">SATELLITE · WIND</div>
+        <div class="prev-label">Global Atmospheric Visualization</div>
+      </div>
+      <div class="pcard-info">
+        <div class="pcard-left">
+          <span class="pcard-ico">🌀</span>
+          <div><div class="pcard-org">NullSchool</div><div class="pcard-title">Earth NullSchool</div></div>
+        </div>
+        <span class="open-btn">Open ↗</span>
+      </div>
+    </a>
+
+    <!-- NASA Worldview -->
+    <a class="pcard pc-purple" href="https://worldview.earthdata.nasa.gov" target="_blank" rel="noopener" style="animation-delay:.12s">
+      <div class="card-bar"></div>
+      <div class="preview prev-worldview">
+        <div class="world-map">
+          <div class="continent c1"></div><div class="continent c2"></div>
+          <div class="continent c3"></div><div class="continent c4"></div><div class="continent c5"></div>
+        </div>
+        <div class="fire-dot fd1"></div><div class="fire-dot fd2"></div><div class="fire-dot fd3"></div>
+        <div class="scan-line"></div>
+        <div class="prev-badge">NASA · EARTH</div>
+        <div class="prev-label">Live Earth Satellite Imagery</div>
+      </div>
+      <div class="pcard-info">
+        <div class="pcard-left">
+          <span class="pcard-ico">🌍</span>
+          <div><div class="pcard-org">NASA EOSDIS</div><div class="pcard-title">NASA Worldview</div></div>
+        </div>
+        <span class="open-btn">Open ↗</span>
+      </div>
+    </a>
+
+    <!-- Solar System 3D -->
+    <a class="pcard pc-orange" href="https://eyes.nasa.gov/apps/orrery/#/home" target="_blank" rel="noopener" style="animation-delay:.16s">
+      <div class="card-bar"></div>
+      <div class="preview prev-solar">
+        <div class="orbit-ring or1"></div>
+        <div class="orbit-ring or2"></div>
+        <div class="orbit-ring or3"></div>
+        <div class="orbit-ring or4"></div>
+        <div class="solar-sun"></div>
+        <div class="planet p1"></div>
+        <div class="planet p2"></div>
+        <div class="planet p3"></div>
+        <div class="planet p4"></div>
+        <div class="prev-badge">NASA · 3D ORRERY</div>
+        <div class="prev-label">Real-Time Solar System Model</div>
+      </div>
+      <div class="pcard-info">
+        <div class="pcard-left">
+          <span class="pcard-ico">🪐</span>
+          <div><div class="pcard-org">NASA Eyes</div><div class="pcard-title">Solar System Real-Time 3D</div></div>
+        </div>
+        <span class="open-btn">Open ↗</span>
+      </div>
+    </a>
+
+  </div>
+</div>
+
+<footer>
+  <a href="#" class="foot-logo">
+    <img src="data:image/jpeg;base64,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" alt="이든이연구소">
+    <span class="foot-name">이든이<span>연구소</span></span>
+  </a>
+  <span class="foot-copy">© 2026 이든이연구소. All rights reserved.</span>
+</footer>
+
+</body>
+</html>
