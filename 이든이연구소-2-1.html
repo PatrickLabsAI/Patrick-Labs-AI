@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이든이연구소</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #f8f9fc;
+  --white: #ffffff;
+  --border: #e8eaf0;
+  --border2: #d0d4e0;
+  --text: #1a1d2e;
+  --text2: #4a5068;
+  --text3: #8890a8;
+  --accent: #5b6ef5;
+  --accent-light: #eef0ff;
+  --accent-hover: #4558e8;
+  --user-bg: #5b6ef5;
+  --ai-bg: #ffffff;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 24px rgba(0,0,0,0.09);
+  --radius: 16px;
+}
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── 헤더 ── */
+header {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  box-shadow: var(--shadow);
+  position: relative;
+  z-index: 10;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #5b6ef5, #8b9cf8);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 2px 8px rgba(91,110,245,0.35);
+}
+
+.logo-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.logo-sub {
+  font-size: 11px;
+  color: var(--text3);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.model-tag {
+  background: var(--accent-light);
+  color: var(--accent);
+  border: 1px solid #d0d6fc;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text3);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  background: #4caf82;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(76,175,130,0.25);
+  animation: blink 2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,100% { opacity:1; }
+  50% { opacity:0.4; }
+}
+
+/* ── 레이아웃 ── */
+.layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── 사이드바 ── */
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-top {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.new-btn {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  justify-content: center;
+  transition: background 0.18s, transform 0.12s;
+  box-shadow: 0 2px 8px rgba(91,110,245,0.3);
+}
+
+.new-btn:hover { background: var(--accent-hover); }
+.new-btn:active { transform: scale(0.98); }
+
+.sidebar-section {
+  padding: 12px 16px 8px;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.history-item {
+  padding: 9px 12px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+}
+
+.history-item:hover { background: var(--bg); }
+.history-item.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+
+.sidebar-bottom {
+  margin-top: auto;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.api-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.api-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.api-input {
+  width: 100%;
+  padding: 8px 11px;
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  font-family: 'Inter', monospace;
+  font-size: 12px;
+  color: var(--text);
+  background: white;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.api-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(91,110,245,0.12);
+}
+
+.api-input::placeholder { color: var(--text3); }
+
+.api-save {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.api-save:hover { background: var(--accent-hover); }
+
+/* ── 메인 채팅 영역 ── */
+.chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ── 웰컴 화면 ── */
+.welcome {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  gap: 8px;
+}
+
+.welcome-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #5b6ef5, #8b9cf8);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 8px 24px rgba(91,110,245,0.3);
+  margin-bottom: 8px;
+}
+
+.welcome-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.03em;
+  margin-bottom: 4px;
+}
+
+.welcome-desc {
+  font-size: 15px;
+  color: var(--text3);
+  text-align: center;
+  line-height: 1.7;
+  max-width: 360px;
+  margin-bottom: 8px;
+}
+
+/* 모바일 API 입력 */
+.mobile-api {
+  display: none;
+  width: 100%;
+  max-width: 380px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  margin-top: 8px;
+}
+
+.mobile-api-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mobile-api input {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1px solid var(--border2);
+  border-radius: 9px;
+  font-family: 'Inter', monospace;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  background: var(--bg);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.mobile-api input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(91,110,245,0.12);
+}
+
+.mobile-api input::placeholder { color: var(--text3); }
+
+.mobile-api button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 11px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 9px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(91,110,245,0.3);
+  transition: background 0.18s;
+}
+
+.mobile-api button:hover { background: var(--accent-hover); }
+
+/* ── 메시지 영역 ── */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  scroll-behavior: smooth;
+}
+
+.messages::-webkit-scrollbar { width: 4px; }
+.messages::-webkit-scrollbar-track { background: transparent; }
+.messages::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+.msg-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  animation: fadeUp 0.22s ease-out;
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(8px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+.msg-row.user { flex-direction: row-reverse; }
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.avatar.ai {
+  background: linear-gradient(135deg, #5b6ef5, #8b9cf8);
+  color: white;
+  box-shadow: 0 2px 6px rgba(91,110,245,0.3);
+}
+
+.avatar.user {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text3);
+  font-size: 14px;
+}
+
+.bubble-wrap { display: flex; flex-direction: column; gap: 2px; max-width: calc(100% - 44px); }
+.msg-row.user .bubble-wrap { align-items: flex-end; }
+
+.sender {
+  font-size: 11px;
+  color: var(--text3);
+  font-weight: 500;
+  padding: 0 4px;
+}
+
+.bubble {
+  padding: 11px 15px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.75;
+  word-break: break-word;
+}
+
+.bubble.ai {
+  background: white;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+  box-shadow: var(--shadow);
+}
+
+.bubble.user {
+  background: var(--accent);
+  color: white;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 2px 8px rgba(91,110,245,0.28);
+}
+
+.bubble p { margin-bottom: 8px; }
+.bubble p:last-child { margin: 0; }
+
+.bubble code {
+  font-family: 'Inter', monospace;
+  font-size: 12px;
+  background: rgba(0,0,0,0.06);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.bubble.user code { background: rgba(255,255,255,0.2); }
+
+.bubble pre {
+  background: #f0f2f8;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.bubble pre code { background: none; font-size: 12px; line-height: 1.6; }
+
+/* 타이핑 */
+.typing-row {
+  display: none;
+  gap: 10px;
+  align-items: flex-end;
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 24px;
+}
+
+.typing-dots {
+  display: flex;
+  gap: 4px;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  border-bottom-left-radius: 4px;
+  box-shadow: var(--shadow);
+}
+
+.typing-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text3);
+  animation: bounce 1.2s ease-in-out infinite;
+}
+
+.typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes bounce {
+  0%,80%,100% { transform: scale(0.7); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* ── 입력 영역 ── */
+.input-area {
+  padding: 12px 24px 18px;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.input-inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.input-box {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  background: var(--bg);
+  border: 1.5px solid var(--border2);
+  border-radius: 14px;
+  padding: 8px 10px 8px 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-box:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(91,110,245,0.1);
+  background: white;
+}
+
+textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.6;
+  max-height: 150px;
+  min-height: 22px;
+}
+
+textarea::placeholder { color: var(--text3); }
+
+.send-btn {
+  width: 36px;
+  height: 36px;
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.18s, transform 0.12s;
+  box-shadow: 0 2px 6px rgba(91,110,245,0.3);
+  color: white;
+}
+
+.send-btn:hover { background: var(--accent-hover); }
+.send-btn:active { transform: scale(0.95); }
+.send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.input-hint {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 7px;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ── 토스트 ── */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: #2d3561;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  transition: all 0.25s;
+  z-index: 999;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── 모바일 반응형 ── */
+@media (max-width: 640px) {
+  .sidebar { display: none; }
+  .mobile-api { display: block; }
+  .messages { padding: 16px; }
+  .input-area { padding: 10px 14px 16px; }
+  .typing-row { padding: 0 16px; }
+  .msg-row { max-width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">이</div>
+    <div>
+      <div class="logo-name">이든이연구소</div>
+      <div class="logo-sub">AI Research Assistant</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="model-tag">Claude Sonnet</div>
+    <div class="status">
+      <div class="dot"></div>
+      <span style="display:none" class="status-text">Online</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- 사이드바 (데스크탑) -->
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <button class="new-btn" onclick="newChat()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        새 대화 시작
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">최근 대화</div>
+      <div id="historyList"></div>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="api-card">
+        <div class="api-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          API Key
+        </div>
+        <input type="password" class="api-input" id="apiKeyInput" placeholder="sk-ant-...">
+        <button class="api-save" onclick="saveKey()">저장하기</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 채팅 영역 -->
+  <main class="chat-area">
+
+    <!-- 웰컴 -->
+    <div class="welcome" id="welcomeScreen">
+      <div class="welcome-icon">이</div>
+      <div class="welcome-title">이든이연구소</div>
+      <div class="welcome-desc">무엇이든 물어보세요.<br>함께 탐구하고, 함께 발견해요.</div>
+
+      <!-- 모바일 API 입력 -->
+      <div class="mobile-api" id="mobileApiBox">
+        <div class="mobile-api-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          API Key 입력 (필수)
+        </div>
+        <input type="password" id="mobileApiInput" placeholder="sk-ant-api...">
+        <button onclick="saveMobileKey()">저장하고 시작하기 →</button>
+      </div>
+    </div>
+
+    <!-- 메시지 -->
+    <div class="messages" id="messages"></div>
+
+    <!-- 타이핑 인디케이터 -->
+    <div class="typing-row" id="typingRow">
+      <div class="avatar ai">이</div>
+      <div class="typing-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <!-- 입력창 -->
+    <div class="input-area">
+      <div class="input-inner">
+        <div class="input-box">
+          <textarea id="msgInput" rows="1"
+            placeholder="이든이에게 무엇이든 물어보세요..."
+            onkeydown="onKey(event)"
+            oninput="resize(this)"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="send()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+        <div class="input-hint">Enter 전송 · Shift+Enter 줄바꿈</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let convs = {};
+  let curId = null;
+  let apiKey = localStorage.getItem('edens_key') || '';
+
+  document.getElementById('apiKeyInput').value = apiKey;
+  if (apiKey) document.getElementById('mobileApiBox').style.display = 'none';
+
+  function saveKey() {
+    const v = document.getElementById('apiKeyInput').value.trim();
+    if (!v) { toast('API Key를 입력해주세요'); return; }
+    apiKey = v;
+    localStorage.setItem('edens_key', v);
+    toast('✓ API Key 저장됐어요!', true);
+  }
+
+  function saveMobileKey() {
+    const v = document.getElementById('mobileApiInput').value.trim();
+    if (!v) { toast('API Key를 입력해주세요'); return; }
+    apiKey = v;
+    localStorage.setItem('edens_key', v);
+    document.getElementById('apiKeyInput').value = v;
+    document.getElementById('mobileApiBox').style.display = 'none';
+    toast('✓ 저장됐어요! 이제 대화해보세요 😊', true);
+  }
+
+  function newChat() {
+    curId = 'c' + Date.now();
+    convs[curId] = {
+      title: '새 대화',
+      msgs: [{ role: 'system', content: '당신은 이든이연구소의 AI 어시스턴트 "이든이"입니다. 친절하고 지적이며 한국어로 자연스럽게 대화합니다. 깊이 있는 통찰과 따뜻한 공감으로 사용자를 돕습니다.' }]
+    };
+    document.getElementById('welcomeScreen').style.display = 'none';
+    const m = document.getElementById('messages');
+    m.style.display = 'flex';
+    m.innerHTML = '';
+    renderHistory();
+    document.getElementById('msgInput').focus();
+  }
+
+  function onKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  }
+
+  function resize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 150) + 'px';
+  }
+
+  async function send() {
+    const inp = document.getElementById('msgInput');
+    const txt = inp.value.trim();
+    if (!txt) return;
+    if (!apiKey) { toast('먼저 API Key를 입력해주세요'); return; }
+    if (!curId) newChat();
+
+    const conv = convs[curId];
+    conv.msgs.push({ role: 'user', content: txt });
+    if (conv.msgs.filter(m => m.role === 'user').length === 1)
+      conv.title = txt.slice(0, 24) + (txt.length > 24 ? '…' : '');
+
+    inp.value = '';
+    inp.style.height = 'auto';
+    addMsg('user', txt);
+    setTyping(true);
+    document.getElementById('sendBtn').disabled = true;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 2048,
+          system: conv.msgs[0].content,
+          messages: conv.msgs.slice(1)
+        })
+      });
+
+      const data = await res.json();
+      if (data.error) {
+        toast('오류: ' + (data.error.message || '알 수 없는 오류'));
+      } else {
+        const reply = data.content[0].text;
+        conv.msgs.push({ role: 'assistant', content: reply });
+        setTyping(false);
+        addMsg('ai', reply);
+      }
+    } catch (e) {
+      toast('네트워크 오류가 발생했어요');
+    }
+
+    setTyping(false);
+    document.getElementById('sendBtn').disabled = false;
+    renderHistory();
+  }
+
+  function addMsg(role, text) {
+    const msgs = document.getElementById('messages');
+    const row = document.createElement('div');
+    row.className = 'msg-row ' + role;
+
+    const av = document.createElement('div');
+    av.className = 'avatar ' + role;
+    av.textContent = role === 'ai' ? '이' : '나';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'bubble-wrap';
+
+    const sn = document.createElement('div');
+    sn.className = 'sender';
+    sn.textContent = role === 'ai' ? '이든이' : '나';
+
+    const bub = document.createElement('div');
+    bub.className = 'bubble ' + role;
+    bub.innerHTML = fmt(text);
+
+    wrap.appendChild(sn);
+    wrap.appendChild(bub);
+    row.appendChild(av);
+    row.appendChild(wrap);
+    msgs.appendChild(row);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function fmt(t) {
+    t = t.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, l, c) =>
+      `<pre><code>${esc(c.trim())}</code></pre>`);
+    t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+    t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    return t.split(/\n\n+/).map(p =>
+      `<p>${p.replace(/\n/g, '<br>')}</p>`
+    ).join('');
+  }
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function setTyping(on) {
+    document.getElementById('typingRow').style.display = on ? 'flex' : 'none';
+    if (on) document.getElementById('messages').scrollTop = 999999;
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('historyList');
+    list.innerHTML = '';
+    Object.entries(convs).reverse().forEach(([id, c]) => {
+      const el = document.createElement('div');
+      el.className = 'history-item' + (id === curId ? ' active' : '');
+      el.textContent = c.title;
+      el.onclick = () => loadConv(id);
+      list.appendChild(el);
+    });
+  }
+
+  function loadConv(id) {
+    curId = id;
+    const c = convs[id];
+    document.getElementById('welcomeScreen').style.display = 'none';
+    const msgs = document.getElementById('messages');
+    msgs.style.display = 'flex';
+    msgs.innerHTML = '';
+    c.msgs.filter(m => m.role !== 'system').forEach(m =>
+      addMsg(m.role === 'user' ? 'user' : 'ai', m.content)
+    );
+    renderHistory();
+  }
+
+  function toast(msg, good) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.style.background = good ? '#2d6a4a' : '#2d3561';
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2800);
+  }
+</script>
+</body>
+</html>
