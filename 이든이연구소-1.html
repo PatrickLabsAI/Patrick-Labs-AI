@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이든이연구소</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&family=DM+Mono:ital,wght@0,300;0,400;1,300&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0c0a;
+    --surface: #181410;
+    --surface2: #211d18;
+    --border: #2e2820;
+    --accent: #d4a853;
+    --accent2: #e8c87a;
+    --text: #ede8e0;
+    --text-muted: #8a7e6e;
+    --text-dim: #4a4238;
+    --user-bubble: #1e2a1a;
+    --user-border: #3a5230;
+    --ai-bubble: #1a1612;
+    --glow: rgba(212, 168, 83, 0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Serif KR', serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── 배경 텍스처 ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(212,168,83,0.07) 0%, transparent 60%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── 헤더 ── */
+  header {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    height: 64px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(14,12,10,0.92);
+    backdrop-filter: blur(12px);
+    flex-shrink: 0;
+  }
+
+  .logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 34px;
+    height: 34px;
+    border: 1.5px solid var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    color: var(--accent);
+    font-size: 18px;
+    font-weight: 600;
+    box-shadow: 0 0 16px var(--glow), inset 0 0 10px var(--glow);
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-family: 'Noto Serif KR', serif;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+
+  .logo-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .model-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #5dbd6a;
+    box-shadow: 0 0 6px #5dbd6a;
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ── 레이아웃 ── */
+  .layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── 사이드바 ── */
+  .sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+    overflow-y: auto;
+  }
+
+  .sidebar-section {
+    padding: 0 16px;
+    margin-bottom: 24px;
+  }
+
+  .sidebar-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 0 4px;
+    margin-bottom: 8px;
+  }
+
+  .new-chat-btn {
+    width: 100%;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, rgba(212,168,83,0.15), rgba(212,168,83,0.06));
+    border: 1px solid rgba(212,168,83,0.3);
+    border-radius: 8px;
+    color: var(--accent2);
+    font-family: 'Noto Serif KR', serif;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  .new-chat-btn:hover {
+    background: linear-gradient(135deg, rgba(212,168,83,0.22), rgba(212,168,83,0.1));
+    border-color: rgba(212,168,83,0.5);
+    box-shadow: 0 0 12px var(--glow);
+  }
+
+  .chat-history-item {
+    padding: 9px 14px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-muted);
+    transition: all 0.18s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+  }
+
+  .chat-history-item:hover, .chat-history-item.active {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  .chat-history-item.active {
+    border-left: 2px solid var(--accent);
+    padding-left: 12px;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .api-key-section {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  .api-key-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .api-key-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+    outline: none;
+    letter-spacing: 0.05em;
+    transition: border-color 0.2s;
+  }
+
+  .api-key-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 8px var(--glow);
+  }
+
+  .api-key-input::placeholder {
+    color: var(--text-dim);
+  }
+
+  .api-key-save {
+    width: 100%;
+    margin-top: 8px;
+    padding: 7px;
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    color: #0e0c0a;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    letter-spacing: 0.04em;
+  }
+
+  .api-key-save:hover { opacity: 0.88; }
+
+  /* ── 채팅 메인 ── */
+  .chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── 웰컴 화면 ── */
+  .welcome {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    gap: 32px;
+  }
+
+  .welcome-emblem {
+    position: relative;
+  }
+
+  .emblem-ring {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(212,168,83,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: spin-slow 20s linear infinite;
+    position: relative;
+  }
+
+  .emblem-ring::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border-radius: 50%;
+    border: 1px dashed rgba(212,168,83,0.15);
+  }
+
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .emblem-core {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,168,83,0.18), rgba(212,168,83,0.04));
+    border: 1.5px solid rgba(212,168,83,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 26px;
+    color: var(--accent2);
+    box-shadow: 0 0 30px var(--glow);
+    animation: spin-reverse 20s linear infinite;
+  }
+
+  @keyframes spin-reverse {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(-360deg); }
+  }
+
+  .welcome-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text);
+    text-align: center;
+    letter-spacing: -0.01em;
+  }
+
+  .welcome-title span {
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  .welcome-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.8;
+    max-width: 420px;
+  }
+
+  .welcome-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    max-width: 560px;
+    width: 100%;
+  }
+
+  .welcome-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.22s;
+    text-align: left;
+  }
+
+  .welcome-card:hover {
+    border-color: rgba(212,168,83,0.35);
+    background: var(--surface2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 16px var(--glow);
+  }
+
+  .card-icon {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+
+  .card-text {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  /* ── 메시지 영역 ── */
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 0;
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    scroll-behavior: smooth;
+  }
+
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-track { background: transparent; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .message-row {
+    display: flex;
+    padding: 6px 28px;
+    gap: 14px;
+    animation: fadeUp 0.28s ease-out;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message-row.user {
+    flex-direction: row-reverse;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .avatar.ai {
+    background: linear-gradient(135deg, rgba(212,168,83,0.2), rgba(212,168,83,0.08));
+    border: 1px solid rgba(212,168,83,0.3);
+    color: var(--accent2);
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 15px;
+  }
+
+  .avatar.user {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+
+  .bubble {
+    max-width: min(600px, 72%);
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.8;
+    letter-spacing: 0.01em;
+  }
+
+  .bubble.ai {
+    background: var(--ai-bubble);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-top-left-radius: 4px;
+  }
+
+  .bubble.user {
+    background: var(--user-bubble);
+    border: 1px solid var(--user-border);
+    color: var(--text);
+    border-top-right-radius: 4px;
+    text-align: right;
+  }
+
+  .bubble p { margin-bottom: 10px; }
+  .bubble p:last-child { margin-bottom: 0; }
+  .bubble code {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--accent2);
+  }
+
+  .bubble pre {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    overflow-x: auto;
+    margin: 8px 0;
+  }
+
+  .bubble pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .sender-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+    padding: 0 2px;
+  }
+
+  .message-col {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .message-row.user .message-col {
+    align-items: flex-end;
+  }
+
+  /* ── 타이핑 인디케이터 ── */
+  .typing-indicator {
+    display: none;
+    padding: 6px 28px;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .typing-dots {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--ai-bubble);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    border-top-left-radius: 4px;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    animation: bounce 1.3s ease-in-out infinite;
+  }
+
+  .dot:nth-child(2) { animation-delay: 0.15s; }
+  .dot:nth-child(3) { animation-delay: 0.3s; }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.8); opacity: 0.4; }
+    40% { transform: scale(1.1); opacity: 1; }
+  }
+
+  /* ── 입력창 ── */
+  .input-wrap {
+    padding: 16px 28px 20px;
+    border-top: 1px solid var(--border);
+    background: rgba(14,12,10,0.85);
+    backdrop-filter: blur(10px);
+    flex-shrink: 0;
+  }
+
+  .input-box {
+    display: flex;
+    align-items: flex-end;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 14px;
+    gap: 10px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .input-box:focus-within {
+    border-color: rgba(212,168,83,0.4);
+    box-shadow: 0 0 20px var(--glow);
+  }
+
+  textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.7;
+    max-height: 160px;
+    min-height: 22px;
+    letter-spacing: 0.01em;
+  }
+
+  textarea::placeholder {
+    color: var(--text-dim);
+  }
+
+  .send-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    background: var(--accent);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.18s;
+    color: #0e0c0a;
+  }
+
+  .send-btn:hover { opacity: 0.85; transform: scale(1.04); }
+  .send-btn:active { transform: scale(0.96); }
+  .send-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  .send-btn svg { width: 16px; height: 16px; }
+
+  .input-footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  .input-hint {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── 에러 토스트 ── */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #3a1a1a;
+    border: 1px solid #6b2e2e;
+    color: #f08080;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 100;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ── 반응형 ── */
+  @media (max-width: 640px) {
+    .sidebar { display: none; }
+    .welcome-cards { grid-template-columns: 1fr 1fr; }
+    .message-row { padding: 6px 16px; }
+    .input-wrap { padding: 12px 16px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<header>
+  <div class="logo-wrap">
+    <div class="logo-icon">이</div>
+    <div>
+      <div class="logo-text">이든이연구소</div>
+      <div class="logo-sub">Research & Dialogue</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="model-badge">claude-sonnet</div>
+    <div class="status-dot"></div>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- 사이드바 -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <button class="new-chat-btn" onclick="newChat()">
+        <span>＋</span> 새 대화 시작
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">최근 대화</div>
+      <div id="historyList"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="api-key-section">
+        <div class="api-key-label">🔑 API Key</div>
+        <input type="password" class="api-key-input" id="apiKeyInput"
+               placeholder="sk-ant-..." value="">
+        <button class="api-key-save" onclick="saveApiKey()">저장하기</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 채팅 영역 -->
+  <main class="chat-main">
+
+    <!-- 웰컴 -->
+    <div class="welcome" id="welcomeScreen">
+      <div class="welcome-emblem">
+        <div class="emblem-ring">
+          <div class="emblem-core">이</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="welcome-title">이든이<span>연구소</span></div>
+        <div class="welcome-subtitle" style="margin-top:12px">
+          지식을 탐구하고, 아이디어를 발견하는 공간.<br>
+          무엇이든 물어보세요.
+        </div>
+      </div>
+
+      <div class="welcome-cards">
+        <div class="welcome-card" onclick="sendSuggestion('오늘 할 일 정리를 도와줘')">
+          <div class="card-icon">📋</div>
+          <div class="card-text">오늘 할 일 정리를 도와줘</div>
+        </div>
+        <div class="welcome-card" onclick="sendSuggestion('Python 코드 작성법을 알려줘')">
+          <div class="card-icon">💻</div>
+          <div class="card-text">Python 코드 작성법을 알려줘</div>
+        </div>
+        <div class="welcome-card" onclick="sendSuggestion('좋은 글쓰기 방법이 뭐야?')">
+          <div class="card-icon">✍️</div>
+          <div class="card-text">좋은 글쓰기 방법이 뭐야?</div>
+        </div>
+        <div class="welcome-card" onclick="sendSuggestion('창의적인 아이디어를 브레인스토밍해줘')">
+          <div class="card-icon">💡</div>
+          <div class="card-text">창의적인 아이디어 브레인스토밍</div>
+        </div>
+        <div class="welcome-card" onclick="sendSuggestion('영어 문장 교정해줘: I am go to school')">
+          <div class="card-icon">🌍</div>
+          <div class="card-text">영어 문장 교정해줘</div>
+        </div>
+        <div class="welcome-card" onclick="sendSuggestion('오늘 기분이 별로야. 공감해줘')">
+          <div class="card-icon">🌿</div>
+          <div class="card-text">오늘 기분이 별로야</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 메시지 -->
+    <div class="messages" id="messages"></div>
+
+    <!-- 타이핑 -->
+    <div class="typing-indicator" id="typingIndicator">
+      <div class="avatar ai">이</div>
+      <div class="typing-dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+
+    <!-- 입력창 -->
+    <div class="input-wrap">
+      <div class="input-box">
+        <textarea id="msgInput" placeholder="이든이에게 무엇이든 물어보세요..." rows="1"
+          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+      <div class="input-footer">
+        <span class="input-hint">Enter 전송 · Shift+Enter 줄바꿈 · API Key 필요</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let conversations = {};
+  let currentConvId = null;
+  let apiKey = localStorage.getItem('edens_api_key') || '';
+
+  // API Key 초기화
+  document.getElementById('apiKeyInput').value = apiKey;
+
+  function saveApiKey() {
+    apiKey = document.getElementById('apiKeyInput').value.trim();
+    localStorage.setItem('edens_api_key', apiKey);
+    showToast('✓ API Key가 저장되었습니다', '#1a3a1a', '#3a6b3a', '#80d080');
+  }
+
+  function newChat() {
+    currentConvId = 'conv_' + Date.now();
+    conversations[currentConvId] = {
+      title: '새 대화',
+      messages: [
+        { role: 'system', content: '당신은 이든이연구소의 AI 어시스턴트 "이든이"입니다. 친절하고 지적이며, 한국어로 자연스럽게 대화합니다. 깊이 있는 통찰과 따뜻한 공감으로 사용자를 돕습니다.' }
+      ]
+    };
+    document.getElementById('welcomeScreen').style.display = 'none';
+    const msgs = document.getElementById('messages');
+    msgs.style.display = 'flex';
+    msgs.innerHTML = '';
+    refreshHistory();
+  }
+
+  function sendSuggestion(text) {
+    newChat();
+    document.getElementById('msgInput').value = text;
+    sendMessage();
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('msgInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    if (!apiKey) {
+      showToast('⚠ 사이드바에서 API Key를 먼저 입력해주세요');
+      return;
+    }
+
+    if (!currentConvId) newChat();
+
+    const conv = conversations[currentConvId];
+    conv.messages.push({ role: 'user', content: text });
+
+    if (conv.messages.filter(m => m.role === 'user').length === 1) {
+      conv.title = text.slice(0, 22) + (text.length > 22 ? '…' : '');
+    }
+
+    input.value = '';
+    input.style.height = 'auto';
+    appendMessage('user', text);
+    setTyping(true);
+    document.getElementById('sendBtn').disabled = true;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 2048,
+          system: conv.messages[0].content,
+          messages: conv.messages.slice(1)
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        showToast('❌ ' + (data.error.message || '오류가 발생했습니다'));
+      } else {
+        const reply = data.content[0].text;
+        conv.messages.push({ role: 'assistant', content: reply });
+        setTyping(false);
+        appendMessage('ai', reply);
+      }
+    } catch (err) {
+      showToast('❌ 네트워크 오류: ' + err.message);
+    }
+
+    setTyping(false);
+    document.getElementById('sendBtn').disabled = false;
+    refreshHistory();
+  }
+
+  function appendMessage(role, text) {
+    const msgs = document.getElementById('messages');
+
+    const row = document.createElement('div');
+    row.className = 'message-row ' + role;
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar ' + role;
+    avatar.textContent = role === 'ai' ? '이' : '나';
+
+    const col = document.createElement('div');
+    col.className = 'message-col';
+
+    const name = document.createElement('div');
+    name.className = 'sender-name';
+    name.textContent = role === 'ai' ? '이든이' : '나';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble ' + role;
+    bubble.innerHTML = formatText(text);
+
+    col.appendChild(name);
+    col.appendChild(bubble);
+    row.appendChild(avatar);
+    row.appendChild(col);
+    msgs.appendChild(row);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function formatText(text) {
+    // 코드 블록
+    text = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) =>
+      `<pre><code>${escHtml(code.trim())}</code></pre>`);
+    // 인라인 코드
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // 볼드
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    // 단락
+    const paragraphs = text.split(/\n\n+/);
+    return paragraphs.map(p => {
+      const lines = p.split('\n').join('<br>');
+      return `<p>${lines}</p>`;
+    }).join('');
+  }
+
+  function escHtml(t) {
+    return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function setTyping(show) {
+    const el = document.getElementById('typingIndicator');
+    el.style.display = show ? 'flex' : 'none';
+    if (show) {
+      document.getElementById('messages').scrollTop = 999999;
+    }
+  }
+
+  function refreshHistory() {
+    const list = document.getElementById('historyList');
+    list.innerHTML = '';
+    Object.entries(conversations).reverse().forEach(([id, conv]) => {
+      const item = document.createElement('div');
+      item.className = 'chat-history-item' + (id === currentConvId ? ' active' : '');
+      item.textContent = conv.title;
+      item.onclick = () => loadConv(id);
+      list.appendChild(item);
+    });
+  }
+
+  function loadConv(id) {
+    currentConvId = id;
+    const conv = conversations[id];
+    const msgs = document.getElementById('messages');
+    document.getElementById('welcomeScreen').style.display = 'none';
+    msgs.style.display = 'flex';
+    msgs.innerHTML = '';
+    conv.messages.filter(m => m.role !== 'system').forEach(m => {
+      appendMessage(m.role === 'user' ? 'user' : 'ai', m.content);
+    });
+    refreshHistory();
+  }
+
+  function showToast(msg, bg, border, color) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = bg || '#3a1a1a';
+    t.style.borderColor = border || '#6b2e2e';
+    t.style.color = color || '#f08080';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>
