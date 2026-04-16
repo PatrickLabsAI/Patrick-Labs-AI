@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Water Safety</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f8fafc;
+  color: #111;
+}
+
+.container {
+  max-width: 420px;
+  margin: auto;
+  padding: 20px;
+}
+
+h1 {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: white;
+  padding: 16px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  font-size: 16px;
+  outline: none;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  margin-top: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.primary {
+  background: #111;
+  color: white;
+}
+
+.secondary {
+  background: #f1f5f9;
+}
+
+.result {
+  margin-top: 16px;
+  text-align: left;
+}
+
+.status {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.safe { color: #16a34a; }
+.warning { color: #f59e0b; }
+.danger { color: #dc2626; }
+
+.suggestions {
+  background: white;
+  border-radius: 12px;
+  margin-top: 6px;
+  overflow: hidden;
+  border: 1px solid #eee;
+}
+
+.suggestions div {
+  padding: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.suggestions div:last-child {
+  border-bottom: none;
+}
+
+.suggestions div:hover {
+  background: #f8fafc;
+}
+
+.source {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #666;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>💧 Can I drink this water?</h1>
+
+<div class="card">
+  <input id="location" placeholder="City or country" oninput="showSuggestions()" />
+  <div id="suggestions" class="suggestions"></div>
+
+  <button class="primary" onclick="checkWater()">Check</button>
+  <button class="secondary" onclick="useMyLocation()">📍 Use my location</button>
+
+  <div id="result" class="result"></div>
+</div>
+
+</div>
+
+<script>
+
+// 데이터 + 출처 포함
+const waterData = {
+  "south korea": {
+    status:"SAFE",
+    risk:"Low",
+    source:"WHO / Korean Water Authority",
+    cities:["seoul","busan","incheon"]
+  },
+  "japan": {
+    status:"SAFE",
+    risk:"Low",
+    source:"WHO / Japan Ministry of Health",
+    cities:["tokyo","osaka"]
+  },
+  "usa": {
+    status:"SAFE",
+    risk:"Varies by city",
+    source:"EPA / CDC",
+    cities:["new york","los angeles"]
+  },
+  "bali": {
+    status:"DANGER",
+    risk:"Bacteria",
+    source:"WHO / Travel Health Reports",
+    cities:["bali"]
+  },
+  "india": {
+    status:"DANGER",
+    risk:"Contamination",
+    source:"WHO / UNICEF",
+    cities:["delhi","mumbai"]
+  },
+  "thailand": {
+    status:"DANGER",
+    risk:"Bacteria",
+    source:"WHO",
+    cities:["bangkok"]
+  },
+  "france": {
+    status:"SAFE",
+    risk:"Low",
+    source:"EU Water Standards",
+    cities:["paris"]
+  },
+  "germany": {
+    status:"SAFE",
+    risk:"Low",
+    source:"EU Water Standards",
+    cities:["berlin"]
+  },
+  "china": {
+    status:"DANGER",
+    risk:"Pollution",
+    source:"WHO Reports",
+    cities:["beijing","shanghai"]
+  },
+  "mexico": {
+    status:"DANGER",
+    risk:"Bacteria",
+    source:"CDC Travel Health",
+    cities:["mexico city"]
+  }
+};
+
+// 자동완성
+function showSuggestions() {
+  const input = document.getElementById("location").value.toLowerCase();
+  const box = document.getElementById("suggestions");
+  box.innerHTML = "";
+
+  if (!input) return;
+
+  let results = [];
+
+  for (let country in waterData) {
+    if (country.includes(input)) results.push(country);
+
+    waterData[country].cities.forEach(city => {
+      if (city.includes(input)) results.push(city);
+    });
+  }
+
+  results.slice(0,5).forEach(item => {
+    const div = document.createElement("div");
+    div.innerText = item;
+    div.onclick = () => {
+      document.getElementById("location").value = item;
+      box.innerHTML = "";
+    };
+    box.appendChild(div);
+  });
+}
+
+// 검색
+function findLocation(input) {
+  input = input.toLowerCase();
+
+  if (waterData[input]) return waterData[input];
+
+  for (let country in waterData) {
+    if (waterData[country].cities.includes(input)) {
+      return waterData[country];
+    }
+  }
+  return null;
+}
+
+// 결과 표시
+function checkWater() {
+  const input = document.getElementById("location").value;
+  const result = document.getElementById("result");
+  const data = findLocation(input);
+
+  if (!data) {
+    result.innerHTML = "<p>No data available. Use filtered water.</p>";
+    return;
+  }
+
+  let className = "warning";
+  let emoji = "⚠️";
+
+  if (data.status === "SAFE") { className = "safe"; emoji = "✅"; }
+  if (data.status === "DANGER") { className = "danger"; emoji = "❌"; }
+
+  result.innerHTML = `
+    <div class="status ${className}">
+      ${emoji} ${data.status}
+    </div>
+    <div>Risk: ${data.risk}</div>
+    <div class="source">Source: ${data.source}</div>
+  `;
+}
+
+// GPS
+function useMyLocation() {
+  navigator.geolocation.getCurrentPosition(() => {
+    alert("Location detected (next step: connect map API)");
+  });
+}
+
+</script>
+
+</body>
+  </html>
