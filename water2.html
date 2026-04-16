@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Water Safety</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f8fafc;
+  color: #111;
+}
+
+.container {
+  max-width: 420px;
+  margin: auto;
+  padding: 20px;
+}
+
+.brand {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+h1 {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.source-top {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.card {
+  background: white;
+  padding: 16px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  font-size: 16px;
+  outline: none;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  margin-top: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.primary {
+  background: #111;
+  color: white;
+}
+
+.result {
+  margin-top: 16px;
+}
+
+.status {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.safe { color: #16a34a; }
+.warning { color: #f59e0b; }
+.danger { color: #dc2626; }
+
+.suggestions {
+  background: white;
+  border-radius: 12px;
+  margin-top: 6px;
+  overflow: hidden;
+  border: 1px solid #eee;
+}
+
+.suggestions div {
+  padding: 12px;
+}
+
+.suggestions div:hover {
+  background: #f1f5f9;
+}
+
+.source {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #666;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="brand">Operating by Patrick Labs AI</div>
+
+<h1>💧 Can I drink this water?</h1>
+
+<div class="source-top">
+Data based on WHO, CDC, UNICEF and local water authorities
+</div>
+
+<div class="card">
+  <input id="location" placeholder="City or country" oninput="showSuggestions()" />
+  <div id="suggestions" class="suggestions"></div>
+
+  <button class="primary" onclick="checkWater()">Check</button>
+
+  <div id="result" class="result"></div>
+</div>
+
+</div>
+
+<script>
+
+const waterData = {
+  "south korea": {status:"SAFE", risk:"Low", source:"WHO / Korean Water Authority", cities:["seoul","busan","incheon"]},
+  "japan": {status:"SAFE", risk:"Low", source:"WHO / Japan Ministry", cities:["tokyo","osaka"]},
+  "usa": {status:"SAFE", risk:"Varies", source:"EPA / CDC", cities:["new york","los angeles"]},
+  "bali": {status:"DANGER", risk:"Bacteria", source:"WHO Travel Data", cities:["bali"]},
+  "india": {status:"DANGER", risk:"Contamination", source:"WHO / UNICEF", cities:["delhi","mumbai"]},
+  "france": {status:"SAFE", risk:"Low", source:"EU Standards", cities:["paris"]},
+  "china": {status:"DANGER", risk:"Pollution", source:"WHO Reports", cities:["beijing"]},
+  "mexico": {status:"DANGER", risk:"Bacteria", source:"CDC Travel", cities:["mexico city"]}
+};
+
+function showSuggestions() {
+  const input = document.getElementById("location").value.toLowerCase();
+  const box = document.getElementById("suggestions");
+  box.innerHTML = "";
+
+  if (!input) return;
+
+  let results = [];
+
+  for (let country in waterData) {
+    if (country.includes(input)) results.push(country);
+
+    waterData[country].cities.forEach(city => {
+      if (city.includes(input)) results.push(city);
+    });
+  }
+
+  results.slice(0,5).forEach(item => {
+    const div = document.createElement("div");
+    div.innerText = item;
+    div.onclick = () => {
+      document.getElementById("location").value = item;
+      box.innerHTML = "";
+    };
+    box.appendChild(div);
+  });
+}
+
+function findLocation(input) {
+  input = input.toLowerCase();
+
+  if (waterData[input]) return waterData[input];
+
+  for (let country in waterData) {
+    if (waterData[country].cities.includes(input)) {
+      return waterData[country];
+    }
+  }
+  return null;
+}
+
+function checkWater() {
+  const input = document.getElementById("location").value;
+  const result = document.getElementById("result");
+  const data = findLocation(input);
+
+  if (!data) {
+    result.innerHTML = "<p>No data available. Use filtered water.</p>";
+    return;
+  }
+
+  let className = "warning";
+  let emoji = "⚠️";
+
+  if (data.status === "SAFE") { className = "safe"; emoji = "✅"; }
+  if (data.status === "DANGER") { className = "danger"; emoji = "❌"; }
+
+  result.innerHTML = `
+    <div class="status ${className}">
+      ${emoji} ${data.status}
+    </div>
+    <div>Risk: ${data.risk}</div>
+    <div class="source">Source: ${data.source}</div>
+  `;
+}
+
+</script>
+
+</body>
+</html>
