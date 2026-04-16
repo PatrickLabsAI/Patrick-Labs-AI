@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Water Safety</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: linear-gradient(to bottom, #e0f7fa, #ffffff);
+  text-align: center;
+  padding: 20px;
+}
+
+h2 {
+  margin-bottom: 20px;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 20px;
+  margin: 10px auto;
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+input {
+  padding: 12px;
+  width: 80%;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  outline: none;
+}
+
+button {
+  padding: 12px;
+  margin: 5px;
+  border-radius: 10px;
+  border: none;
+  background: #4fc3f7;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #29b6f6;
+}
+
+.result {
+  margin-top: 10px;
+}
+
+.suggestions {
+  background: white;
+  border-radius: 10px;
+  max-width: 300px;
+  margin: auto;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+}
+
+.suggestions div {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.suggestions div:hover {
+  background: #eee;
+}
+
+.safe { color: green; }
+.warning { color: orange; }
+.danger { color: red; }
+</style>
+</head>
+
+<body>
+
+<h2>💧 Can I Drink This Water?</h2>
+
+<div class="card">
+  <input id="location" placeholder="Enter city or country" oninput="showSuggestions()" />
+  <div id="suggestions" class="suggestions"></div>
+  <br/>
+  <button onclick="checkWater()">Check</button>
+  <button onclick="useMyLocation()">📍 My Location</button>
+</div>
+
+<div id="result" class="card result" style="display:none;"></div>
+
+<script>
+
+// ✅ 데이터 (파일 하나에 포함)
+const waterData = {
+  "south korea": {status:"SAFE", risk:"Low", cities:["seoul","busan","incheon"]},
+  "japan": {status:"SAFE", risk:"Low", cities:["tokyo","osaka"]},
+  "usa": {status:"SAFE", risk:"Low", cities:["new york","los angeles"]},
+  "bali": {status:"DANGER", risk:"Bacteria", cities:["bali"]},
+  "india": {status:"DANGER", risk:"Contamination", cities:["delhi","mumbai"]},
+  "thailand": {status:"DANGER", risk:"Bacteria", cities:["bangkok"]},
+  "vietnam": {status:"DANGER", risk:"Bacteria", cities:["hanoi"]},
+  "france": {status:"SAFE", risk:"Low", cities:["paris"]},
+  "germany": {status:"SAFE", risk:"Low", cities:["berlin"]},
+  "uk": {status:"SAFE", risk:"Low", cities:["london"]},
+  "italy": {status:"SAFE", risk:"Low", cities:["rome"]},
+  "spain": {status:"SAFE", risk:"Low", cities:["madrid"]},
+  "china": {status:"DANGER", risk:"Pollution", cities:["beijing","shanghai"]},
+  "mexico": {status:"DANGER", risk:"Bacteria", cities:["mexico city"]},
+  "brazil": {status:"WARNING", risk:"Varies", cities:["rio"]},
+  "turkey": {status:"WARNING", risk:"Treatment", cities:["istanbul"]},
+  "egypt": {status:"DANGER", risk:"Contamination", cities:["cairo"]},
+  "australia": {status:"SAFE", risk:"Low", cities:["sydney"]},
+  "canada": {status:"SAFE", risk:"Low", cities:["toronto"]},
+  "singapore": {status:"SAFE", risk:"Low", cities:["singapore"]}
+};
+
+// 🔍 자동완성
+function showSuggestions() {
+  const input = document.getElementById("location").value.toLowerCase();
+  const box = document.getElementById("suggestions");
+  box.innerHTML = "";
+
+  if (!input) return;
+
+  let results = [];
+
+  for (let country in waterData) {
+    if (country.includes(input)) results.push(country);
+
+    waterData[country].cities.forEach(city => {
+      if (city.includes(input)) results.push(city);
+    });
+  }
+
+  results.slice(0,5).forEach(item => {
+    const div = document.createElement("div");
+    div.innerText = item;
+    div.onclick = () => {
+      document.getElementById("location").value = item;
+      box.innerHTML = "";
+    };
+    box.appendChild(div);
+  });
+}
+
+// 🌍 검색
+function findLocation(input) {
+  input = input.toLowerCase();
+
+  if (waterData[input]) return waterData[input];
+
+  for (let country in waterData) {
+    if (waterData[country].cities.includes(input)) {
+      return waterData[country];
+    }
+  }
+  return null;
+}
+
+function checkWater() {
+  const input = document.getElementById("location").value;
+  const result = document.getElementById("result");
+  const data = findLocation(input);
+
+  if (!data) {
+    result.innerHTML = "<h3>UNKNOWN</h3><p>Use filtered water.</p>";
+    result.style.display = "block";
+    return;
+  }
+
+  let color = "orange";
+  let emoji = "⚠️";
+
+  if (data.status === "SAFE") { color = "green"; emoji="✅"; }
+  if (data.status === "DANGER") { color = "red"; emoji="❌"; }
+
+  result.innerHTML = `
+    <h2 style="color:${color}">${emoji} ${data.status}</h2>
+    <p>Risk: ${data.risk}</p>
+  `;
+
+  result.style.display = "block";
+}
+
+// 📍 GPS
+function useMyLocation() {
+  navigator.geolocation.getCurrentPosition(() => {
+    alert("Location detected (Demo)");
+  });
+}
+
+</script>
+
+</body>
+</html>
